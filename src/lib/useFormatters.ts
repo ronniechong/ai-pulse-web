@@ -51,6 +51,20 @@ export function useFormatters() {
     return intl.formatDate(iso, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })
   }
 
+  /** Absolute date + time in the viewer's own local timezone (no forced
+   * timeZone override) — for tooltips that need the precise moment behind
+   * a relative-time label like "3 hours ago". */
+  function dateTime(iso: string): string {
+    return intl.formatDate(iso, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    })
+  }
+
   function relativeTime(iso: string): string {
     const diffMs = Date.now() - new Date(iso).getTime()
     const diffHours = Math.round(diffMs / 3_600_000)
@@ -59,5 +73,5 @@ export function useFormatters() {
     return intl.formatRelativeTime(-Math.round(diffHours / 24), 'day', { numeric: 'auto' })
   }
 
-  return { pct, deltaPct, deltaRank, compact, wholeNumber, decimal, decimalDelta, date, relativeTime }
+  return { pct, deltaPct, deltaRank, compact, wholeNumber, decimal, decimalDelta, date, dateTime, relativeTime }
 }

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useDashboardData } from '@/lib/DashboardDataContext'
 import { useFormatters } from '@/lib/useFormatters'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export function Header() {
   const { manifest } = useDashboardData()
-  const { relativeTime } = useFormatters()
+  const { relativeTime, dateTime } = useFormatters()
 
   // DashboardDataProvider's poll skips setState when data_version is
   // unchanged (the common case between pipeline runs), so nothing forces
@@ -37,9 +38,20 @@ export function Header() {
               className="h-[7px] w-[7px] rounded-full"
               style={{ background: isDegraded ? 'var(--pulse-amber)' : 'var(--pulse-up)' }}
             />
-            <span className="font-mono text-[11.5px] text-[var(--pulse-muted)]">
-              {manifest ? `Data as of ${relativeTime(manifest.generated_at)}` : 'Loading…'}
-            </span>
+            {manifest ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help font-mono text-[11.5px] text-[var(--pulse-muted)]" tabIndex={0}>
+                    {`Data as of ${relativeTime(manifest.generated_at)}`}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="font-sans text-[11.5px] leading-snug" side="bottom">
+                  Last scheduled update: {dateTime(manifest.generated_at)}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <span className="font-mono text-[11.5px] text-[var(--pulse-muted)]">Loading…</span>
+            )}
           </div>
         </div>
       </div>
