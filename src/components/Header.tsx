@@ -1,9 +1,21 @@
+import { useEffect, useState } from 'react'
 import { useDashboardData } from '@/lib/DashboardDataContext'
 import { useFormatters } from '@/lib/useFormatters'
 
 export function Header() {
   const { manifest } = useDashboardData()
   const { relativeTime } = useFormatters()
+
+  // DashboardDataProvider's poll skips setState when data_version is
+  // unchanged (the common case between pipeline runs), so nothing forces
+  // this component to re-render on its own — relativeTime() would freeze
+  // at whatever it read on the last real render instead of ticking forward.
+  // A local timer, independent of the data poll, keeps it live.
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 60_000)
+    return () => clearInterval(interval)
+  }, [])
   const sources = manifest ? Object.values(manifest.sources) : []
   const degraded = sources.filter((s) => s.status === 'degraded')
   const isDegraded = degraded.length > 0
