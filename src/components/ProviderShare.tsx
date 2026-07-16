@@ -39,9 +39,29 @@ export function ProviderShare() {
           label: {
             show: true,
             formatter: (p) => `{name|${p.name}}\n{pct|${pct(Number(p.value))}}`,
+            // Tile background ranges from near-dark (small shares) to
+            // bright accent-blue (the top provider) — a single fixed text
+            // color can't stay legible across that whole range, so both
+            // labels get a soft dark shadow/halo regardless of what's
+            // underneath. Also bumped `pct` off CHART_COL.muted, which
+            // was unreadable against the brightest tiles.
             rich: {
-              name: { fontFamily: FONT_SANS, fontSize: 11.5, color: CHART_COL.text, lineHeight: 16 },
-              pct: { fontFamily: FONT_MONO, fontSize: 11, color: CHART_COL.muted, lineHeight: 14 },
+              name: {
+                fontFamily: FONT_SANS,
+                fontSize: 11.5,
+                color: CHART_COL.text,
+                lineHeight: 16,
+                textShadowColor: 'rgba(0, 0, 0, 0.55)',
+                textShadowBlur: 4,
+              },
+              pct: {
+                fontFamily: FONT_MONO,
+                fontSize: 11,
+                color: 'rgba(255, 255, 255, 0.82)',
+                lineHeight: 14,
+                textShadowColor: 'rgba(0, 0, 0, 0.55)',
+                textShadowBlur: 4,
+              },
             },
           },
           itemStyle: { borderColor: CHART_COL.panel, borderWidth: 2, gapWidth: 2 },
@@ -67,7 +87,13 @@ export function ProviderShare() {
   const ref = useEcharts(option, [shares], loading && shares.length === 0)
 
   return (
-    <div className="flex min-w-[380px] flex-1 flex-col rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
+    // flex-1 stretches this to match RankingsTable's height (its sibling in
+    // the same row) in the common case, but RankingsTable can grow a lot
+    // (the "show all 50 models" toggle) — max-h caps how far this panel
+    // stretches with it, so the treemap doesn't turn into a handful of
+    // absurdly tall, thin slivers when the sibling is much taller than a
+    // treemap actually wants to be.
+    <div className="flex max-h-[630px] min-w-[380px] flex-1 flex-col rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <span className="font-sans text-[13px] font-semibold text-[var(--pulse-text)]">Provider share</span>
         {hhi?.hhi_today != null && (
@@ -77,7 +103,7 @@ export function ProviderShare() {
           </span>
         )}
       </div>
-      <div className="relative min-h-[190px] w-full flex-1">
+      <div className="relative min-h-[190px] max-h-[560px] w-full flex-1">
         <div ref={ref} className="h-full w-full" />
         {!loading && shares.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center font-sans text-[13px] text-[var(--pulse-faint)]">
