@@ -1,6 +1,7 @@
 import { useDashboardData } from '@/lib/DashboardDataContext'
 import { useFormatters } from '@/lib/useFormatters'
 import { PanelSkeleton } from '@/components/PanelSkeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const DISPLAY_COUNT = 8
 
@@ -34,9 +35,19 @@ export function OccupationsPanel() {
             const aug = o.augmentation_pct ?? 0
             return (
               <div key={o.soc_code} className="mb-2 grid grid-cols-[150px_1fr_90px] items-center gap-2.5">
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap font-sans text-xs text-[var(--pulse-text)]">
-                  {o.name}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      tabIndex={0}
+                      className="cursor-help overflow-hidden text-ellipsis whitespace-nowrap text-left font-sans text-xs text-[var(--pulse-text)]"
+                    >
+                      {o.name}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px] font-sans text-[11.5px] leading-snug">
+                    {o.name}
+                  </TooltipContent>
+                </Tooltip>
                 <span className="flex h-3.5 overflow-hidden rounded bg-[var(--pulse-border)]">
                   <span style={{ width: `${auto}%`, background: 'var(--pulse-faint)', opacity: 0.55 }} />
                   <span style={{ width: `${aug}%`, background: 'var(--pulse-accent)' }} />

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { EChartsOption } from 'echarts'
 import { useDashboardData } from '@/lib/DashboardDataContext'
 import { useEcharts } from '@/hooks/useEcharts'
-import { COL, FONT_MONO, FONT_SANS } from '@/lib/tokens'
+import { CHART_COL, FONT_MONO, FONT_SANS, lerpColor } from '@/lib/tokens'
 import { useFormatters } from '@/lib/useFormatters'
 
 export function ProviderShare() {
@@ -10,9 +10,26 @@ export function ProviderShare() {
   const { pct, decimal, decimalDelta } = useFormatters()
   const shares = facts?.rankings.provider_share ?? []
   const hhi = facts?.rankings.concentration
+  const maxShare = Math.max(1e-9, ...shares.map((p) => p.token_share_today))
 
   const option: EChartsOption = useMemo(
     () => ({
+      // Small tiles hide their in-box label (not enough room to fit text
+      // without overflowing) — the tooltip is the only way to identify
+      // those providers/values at all, not just a hover nicety.
+      tooltip: {
+        // Neither params.name nor params.data is trustworthy here — ECharts'
+        // treemap layout mutates the node's value internally (for its own
+        // squarified-layout math) in a way that leaks into both. dataIndex
+        // still reliably maps back to our own `shares` array in order, so
+        // look the real values up there instead of trusting what ECharts
+        // hands back.
+        formatter: (params) => {
+          const i = (params as { dataIndex?: number }).dataIndex
+          const p = i != null ? shares[i] : undefined
+          return p ? `${p.provider}: ${pct(p.token_share_today)}` : ''
+        },
+      },
       series: [
         {
           type: 'treemap',
@@ -23,16 +40,22 @@ export function ProviderShare() {
             show: true,
             formatter: (p) => `{name|${p.name}}\n{pct|${pct(Number(p.value))}}`,
             rich: {
-              name: { fontFamily: FONT_SANS, fontSize: 11.5, color: COL.text, lineHeight: 16 },
-              pct: { fontFamily: FONT_MONO, fontSize: 11, color: COL.muted, lineHeight: 14 },
+              name: { fontFamily: FONT_SANS, fontSize: 11.5, color: CHART_COL.text, lineHeight: 16 },
+              pct: { fontFamily: FONT_MONO, fontSize: 11, color: CHART_COL.muted, lineHeight: 14 },
             },
           },
-          itemStyle: { borderColor: COL.panel, borderWidth: 2, gapWidth: 2 },
-          levels: [{ itemStyle: { borderColor: COL.panel, borderWidth: 2, gapWidth: 2 } }],
+          itemStyle: { borderColor: CHART_COL.panel, borderWidth: 2, gapWidth: 2 },
+          levels: [{ itemStyle: { borderColor: CHART_COL.panel, borderWidth: 2, gapWidth: 2 } }],
+          // Color intensity is a second encoding of the same value the box
+          // area already represents — computed per node (not ECharts' own
+          // colorMappingBy, which cycles through unrelated hues instead of
+          // shading smoothly) so the biggest provider is visually obvious
+          // at a glance, not just "the biggest rectangle" among identically
+          // -shaded ones.
           data: shares.map((p) => ({
             name: p.provider,
             value: p.token_share_today,
-            itemStyle: { color: COL.panel2 },
+            itemStyle: { color: lerpColor(CHART_COL.panel2, CHART_COL.accent, p.token_share_today / maxShare) },
           })),
         },
       ],
@@ -44,7 +67,7 @@ export function ProviderShare() {
   const ref = useEcharts(option, [shares], loading && shares.length === 0)
 
   return (
-    <div className="min-w-[380px] flex-1 rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
+    <div className="flex min-w-[380px] flex-1 flex-col rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <span className="font-sans text-[13px] font-semibold text-[var(--pulse-text)]">Provider share</span>
         {hhi?.hhi_today != null && (
@@ -54,7 +77,7 @@ export function ProviderShare() {
           </span>
         )}
       </div>
-      <div className="relative h-[190px] w-full">
+      <div className="relative min-h-[190px] w-full flex-1">
         <div ref={ref} className="h-full w-full" />
         {!loading && shares.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center font-sans text-[13px] text-[var(--pulse-faint)]">

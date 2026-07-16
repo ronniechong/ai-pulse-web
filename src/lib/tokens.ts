@@ -27,5 +27,48 @@ export function deltaColor(value: number | null | undefined): string {
   return value > 0 ? COL.up : COL.down
 }
 
+/** Resolves any CSS color (including oklch()) to a plain rgb()/rgba()
+ * string via a canvas pixel readback. Needed because zrender (ECharts'
+ * renderer) has its own color parser that doesn't understand oklch() —
+ * passing it directly works for a flat fill (the string reaches canvas as
+ * a raw fillStyle, which browsers do parse) but breaks anything that needs
+ * zrender to *compute* a variant of the color, e.g. the default hover/
+ * emphasis highlight, which comes out black or invisible. getComputedStyle
+ * isn't reliable for this: modern Chrome echoes wide-gamut colors back in
+ * their original notation (still oklch(), just re-serialized) instead of
+ * converting to rgb() — a canvas 2D context always resolves fillStyle to
+ * concrete 8-bit sRGB bytes on readback, which is what we actually need.
+ * Chart option colors should always go through this; DOM/Tailwind styles
+ * shouldn't, since the browser already parses oklch() natively there. */
+function toRgb(cssColor: string): string {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1
+  canvas.height = 1
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = cssColor
+  ctx.fillRect(0, 0, 1, 1)
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
+  return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${(a / 255).toFixed(3)})`
+}
+
+/** COL, pre-resolved to rgb()/rgba() — use this (never COL directly) inside
+ * ECharts theme/option objects. See toRgb() for why. */
+export const CHART_COL = Object.fromEntries(Object.entries(COL).map(([k, v]) => [k, toRgb(v)])) as typeof COL
+
+/** Linearly interpolates between two CHART_COL-style rgb()/rgba() strings.
+ * ECharts treemap's own `colorMappingBy: 'value'` doesn't produce a clean
+ * two-stop gradient in practice — sibling nodes get assigned noticeably
+ * different hues instead of shading smoothly, so charts that want a real
+ * value-driven color ramp compute it themselves per node with this instead
+ * of leaning on the treemap's built-in coloring. */
+export function lerpColor(from: string, to: string, t: number): string {
+  const clamped = Math.min(1, Math.max(0, t))
+  const parse = (c: string) => c.match(/[\d.]+/g)!.map(Number)
+  const [r1, g1, b1] = parse(from)
+  const [r2, g2, b2] = parse(to)
+  const mix = (a: number, b: number) => Math.round(a + (b - a) * clamped)
+  return `rgb(${mix(r1, r2)}, ${mix(g1, g2)}, ${mix(b1, b2)})`
+}
+
 // Number/percent/date formatting lives in lib/useFormatters.ts (FormatJS) —
 // this module only owns visual tokens (colors, fonts).

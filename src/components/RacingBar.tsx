@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { EChartsOption } from 'echarts'
 import { useDashboardData } from '@/lib/DashboardDataContext'
 import { useEcharts } from '@/hooks/useEcharts'
-import { COL, FONT_MONO, FONT_SANS } from '@/lib/tokens'
+import { CHART_COL, FONT_MONO, FONT_SANS } from '@/lib/tokens'
 import { formatModelName } from '@/lib/format'
 import { useFormatters } from '@/lib/useFormatters'
 import { Button } from '@/components/ui/button'
@@ -67,7 +67,7 @@ export function RacingBar() {
         data: sorted.map((b) => b.name),
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { color: COL.text, fontFamily: FONT_SANS, fontSize: 12.5 },
+        axisLabel: { color: CHART_COL.text, fontFamily: FONT_SANS, fontSize: 12.5 },
       },
       animationDuration: BASE_INTERVAL_MS * 0.8,
       animationDurationUpdate: BASE_INTERVAL_MS * 0.8,
@@ -78,12 +78,12 @@ export function RacingBar() {
           type: 'bar',
           data: sorted.map((b) => b.share),
           barWidth: 16,
-          itemStyle: { color: COL.accent, borderRadius: [0, 4, 4, 0] },
+          itemStyle: { color: CHART_COL.accent, borderRadius: [0, 4, 4, 0] },
           label: {
             show: true,
             position: 'right',
             formatter: (p) => pct(Number(p.value)),
-            color: COL.muted,
+            color: CHART_COL.muted,
             fontFamily: FONT_MONO,
             fontSize: 12,
           },

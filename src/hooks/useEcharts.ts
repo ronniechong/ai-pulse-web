@@ -5,22 +5,24 @@
 import { useEffect, useRef } from 'react'
 import * as echarts from 'echarts/core'
 import { BarChart, TreemapChart } from 'echarts/charts'
-import { GridComponent } from 'echarts/components'
+import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption, ECharts } from 'echarts'
 import { PULSE_ECHARTS_THEME } from '@/lib/echartsTheme'
-import { COL, FONT_MONO } from '@/lib/tokens'
+import { CHART_COL, FONT_MONO } from '@/lib/tokens'
 
 // Only the chart/component types the two chart panels (RacingBar's bar
 // chart, ProviderShare's treemap) actually use — importing full `echarts`
-// pulled in every chart type and inflated the bundle by ~1MB.
-echarts.use([BarChart, TreemapChart, GridComponent, CanvasRenderer])
+// pulled in every chart type and inflated the bundle by ~1MB. TooltipComponent
+// is needed for ProviderShare's treemap tooltip (small tiles hide their
+// label but still need a way to surface their name/value on hover).
+echarts.use([BarChart, TreemapChart, GridComponent, TooltipComponent, CanvasRenderer])
 echarts.registerTheme('pulse', PULSE_ECHARTS_THEME)
 
 const LOADING_OPTION = {
   text: '',
-  color: COL.accent,
-  textColor: COL.muted,
+  color: CHART_COL.accent,
+  textColor: CHART_COL.muted,
   maskColor: 'transparent',
   fontSize: 12,
   fontFamily: FONT_MONO,
@@ -42,11 +44,15 @@ export function useEcharts(option: EChartsOption, deps: unknown[], loading = fal
     const chart = echarts.init(containerRef.current, 'pulse')
     chartRef.current = chart
 
-    const onResize = () => chart.resize()
-    window.addEventListener('resize', onResize)
+    // ResizeObserver (not just window resize) — this container can change
+    // size from CSS layout alone, e.g. stretching to match a sibling
+    // panel's height when that panel's own content grows/shrinks, with no
+    // window resize event involved at all.
+    const observer = new ResizeObserver(() => chart.resize())
+    observer.observe(containerRef.current)
 
     return () => {
-      window.removeEventListener('resize', onResize)
+      observer.disconnect()
       chart.dispose()
       chartRef.current = null
     }

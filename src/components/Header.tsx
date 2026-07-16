@@ -24,7 +24,10 @@ export function Header() {
     <header className="sticky top-0 z-10 border-b border-[var(--pulse-border)] bg-[var(--pulse-bg)]">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-3.5">
         <div className="flex items-baseline gap-2.5">
-          <span className="inline-block h-2 w-2 rounded-full bg-[var(--pulse-accent)]" />
+          <span className="relative inline-flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--pulse-accent)] opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--pulse-accent)]" />
+          </span>
           <span className="font-sans text-base font-bold text-[var(--pulse-text)]">AI Pulse</span>
           <span className="font-sans text-xs text-[var(--pulse-faint)]">Global AI model usage, daily</span>
         </div>

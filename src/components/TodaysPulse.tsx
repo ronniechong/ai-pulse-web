@@ -22,7 +22,12 @@ export function TodaysPulse() {
   const record = facts?.rankings.records[0] ?? null
   const hasCards = Boolean(mover || entrant || record)
 
-  const heroStrip = rankings?.models.slice(0, 10) ?? []
+  // "other" is a special aggregate row (everything outside the top 50) that
+  // can rank higher than individual models by raw token volume — the main
+  // rankings table already excludes it from its numbered list and shows it
+  // as its own footer row, so the hero strip needs the same filter or it
+  // shows a pill literally labeled "Other" as if it were a real model.
+  const heroStrip = rankings?.models.filter((m) => m.model !== 'other').slice(0, 10) ?? []
   const moverByModel = new Map((facts?.rankings.movers ?? []).map((m) => [m.model, m]))
 
   if (!commentary || !rankings) {

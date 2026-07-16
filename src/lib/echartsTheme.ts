@@ -1,7 +1,8 @@
 // Generated once from lib/tokens.ts COL — the single source of truth for
 // both the Tailwind theme (index.css) and this ECharts theme (locked stack
 // decision: design tokens as CSS variables generating the ECharts theme).
-import { COL, FONT_MONO } from './tokens'
+// Uses CHART_COL (rgb-resolved), not COL (raw oklch) — see tokens.ts.
+import { CHART_COL as COL, FONT_MONO } from './tokens'
 
 export const PULSE_ECHARTS_THEME = {
   backgroundColor: 'transparent',

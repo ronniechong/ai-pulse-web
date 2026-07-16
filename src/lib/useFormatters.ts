@@ -31,6 +31,12 @@ export function useFormatters() {
     return intl.formatNumber(value, { notation: 'compact' })
   }
 
+  /** Exact count with locale grouping (e.g. "1,234,567") — for tooltips
+   * where the abbreviated `compact()` form would lose precision. */
+  function wholeNumber(value: number): string {
+    return intl.formatNumber(value, { maximumFractionDigits: 0 })
+  }
+
   /** Plain decimal, no % — for indices like HHI that aren't percentages. */
   function decimal(value: number, digits = 2): string {
     return intl.formatNumber(value, { minimumFractionDigits: digits, maximumFractionDigits: digits })
@@ -53,5 +59,5 @@ export function useFormatters() {
     return intl.formatRelativeTime(-Math.round(diffHours / 24), 'day', { numeric: 'auto' })
   }
 
-  return { pct, deltaPct, deltaRank, compact, decimal, decimalDelta, date, relativeTime }
+  return { pct, deltaPct, deltaRank, compact, wholeNumber, decimal, decimalDelta, date, relativeTime }
 }

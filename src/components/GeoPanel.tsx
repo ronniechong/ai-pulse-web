@@ -94,9 +94,21 @@ export function GeoPanel() {
         ))}
       </div>
 
-      {geoAdoption && (
+      {mode === 'adoption' && geoAdoption && (
         <div className="mt-2 font-mono text-[10.5px] text-[var(--pulse-faint)]">
-          Vintage: AEI {date(releaseToIso(geoAdoption.release))} · static between quarterly releases
+          Claude usage only, not AI adoption broadly — Anthropic Economic Index, AEI{' '}
+          {date(releaseToIso(geoAdoption.release))} release · static between quarterly releases
+        </div>
+      )}
+      {mode === 'downloads' && (
+        <div className="mt-2 font-mono text-[10.5px] text-[var(--pulse-faint)]">
+          PyPI SDK installs (anthropic, openai, google-generativeai, ollama, mistralai) via ClickPy · updates daily
+        </div>
+      )}
+      {regions.length > 0 && (
+        <div className="mt-1 font-mono text-[10.5px] text-[var(--pulse-faint)]">
+          These 8 regions don&apos;t cover the whole world — there&apos;s no Oceania/Pacific bucket, so Australia,
+          NZ, and similar codes are excluded here rather than folded into a nearby region.
         </div>
       )}
     </div>
