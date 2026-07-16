@@ -95,74 +95,119 @@ export function RankingsTable() {
           No models match this filter.
         </div>
       ) : (
-        <div>
-          <div className="grid grid-cols-[28px_1.6fr_110px_1.2fr_70px_60px] items-center gap-2.5 border-b border-[var(--pulse-border)] px-1 py-1.5 font-mono text-[9.5px] font-semibold text-[var(--pulse-faint)]">
-            <span>#</span>
-            <span>Model</span>
-            <span>Provider</span>
-            <span>Token share</span>
-            <span className="text-center">30d</span>
-            <span className="text-right">Δ</span>
-          </div>
-          {filtered.map((r) => {
-            const mover = moverByModel.get(r.model)
-            const spark = sparklines.get(r.model)
-            const delta = deltaFor(mover, window)
-            return (
-              <div
-                key={r.model}
-                className="grid min-h-[40px] grid-cols-[28px_1.6fr_110px_1.2fr_70px_60px] items-center gap-2.5 border-b border-[var(--pulse-border)] px-1"
-              >
-                <span className="font-mono text-[11.5px] text-[var(--pulse-faint)]">{r.rank}</span>
-                <span className="font-sans text-[13px] text-[var(--pulse-text)]">{formatModelName(r.model)}</span>
-                <span className="w-fit rounded bg-[var(--pulse-panel2)] px-1.5 py-0.5 font-sans text-[11.5px] text-[var(--pulse-muted)]">
-                  {mover?.provider ?? '—'}
-                </span>
+        <>
+          {/* Desktop/tablet: fixed-column grid with sparklines. */}
+          <div className="hidden sm:block">
+            <div className="grid grid-cols-[28px_1.6fr_110px_1.2fr_70px_60px] items-center gap-2.5 border-b border-[var(--pulse-border)] px-1 py-1.5 font-mono text-[9.5px] font-semibold text-[var(--pulse-faint)]">
+              <span>#</span>
+              <span>Model</span>
+              <span>Provider</span>
+              <span>Token share</span>
+              <span className="text-center">30d</span>
+              <span className="text-right">Δ</span>
+            </div>
+            {filtered.map((r) => {
+              const mover = moverByModel.get(r.model)
+              const spark = sparklines.get(r.model)
+              const delta = deltaFor(mover, window)
+              return (
+                <div
+                  key={r.model}
+                  className="grid min-h-[40px] grid-cols-[28px_1.6fr_110px_1.2fr_70px_60px] items-center gap-2.5 border-b border-[var(--pulse-border)] px-1"
+                >
+                  <span className="font-mono text-[11.5px] text-[var(--pulse-faint)]">{r.rank}</span>
+                  <span className="font-sans text-[13px] text-[var(--pulse-text)]">{formatModelName(r.model)}</span>
+                  <span className="w-fit rounded bg-[var(--pulse-panel2)] px-1.5 py-0.5 font-sans text-[11.5px] text-[var(--pulse-muted)]">
+                    {mover?.provider ?? '—'}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="h-1.5 min-w-[50px] flex-1 overflow-hidden rounded-full bg-[var(--pulse-border)]">
+                      <span
+                        className="block h-full rounded-full bg-[var(--pulse-accent)]"
+                        style={{ width: `${Math.min(100, r.token_share * 100 * 5)}%` }}
+                      />
+                    </span>
+                    <span className="w-[42px] text-right font-mono text-[11.5px] text-[var(--pulse-muted)]">
+                      {pct(r.token_share)}
+                    </span>
+                  </span>
+                  <span className="flex justify-center">
+                    <svg width="64" height="24" viewBox="0 0 64 24">
+                      {spark && (
+                        <path d={spark.path} fill="none" stroke={sparkColor(spark.direction)} strokeWidth="1.6" />
+                      )}
+                    </svg>
+                  </span>
+                  <span className="text-right font-mono text-[12px]" style={{ color: deltaColor(delta) }}>
+                    {deltaRank(delta)}
+                  </span>
+                </div>
+              )
+            })}
+            {otherRow && !providerFilter && !search && (
+              <div className="grid min-h-[40px] grid-cols-[28px_1.6fr_110px_1.2fr_70px_60px] items-center gap-2.5 px-1">
+                <span className="font-mono text-[11.5px] text-[var(--pulse-faint)]">—</span>
+                <span className="font-sans text-[13px] italic text-[var(--pulse-faint)]">Other (unranked models)</span>
+                <span />
                 <span className="flex items-center gap-2">
                   <span className="h-1.5 min-w-[50px] flex-1 overflow-hidden rounded-full bg-[var(--pulse-border)]">
                     <span
-                      className="block h-full rounded-full bg-[var(--pulse-accent)]"
-                      style={{ width: `${Math.min(100, r.token_share * 100 * 5)}%` }}
+                      className="block h-full rounded-full opacity-40"
+                      style={{ width: `${otherRow.token_share * 100}%`, background: 'var(--pulse-faint)' }}
                     />
                   </span>
                   <span className="w-[42px] text-right font-mono text-[11.5px] text-[var(--pulse-muted)]">
-                    {pct(r.token_share)}
+                    {pct(otherRow.token_share)}
                   </span>
                 </span>
-                <span className="flex justify-center">
-                  <svg width="64" height="24" viewBox="0 0 64 24">
-                    {spark && (
-                      <path d={spark.path} fill="none" stroke={sparkColor(spark.direction)} strokeWidth="1.6" />
-                    )}
-                  </svg>
-                </span>
-                <span className="text-right font-mono text-[12px]" style={{ color: deltaColor(delta) }}>
-                  {deltaRank(delta)}
-                </span>
+                <span />
+                <span />
               </div>
-            )
-          })}
-          {otherRow && !providerFilter && !search && (
-            <div className="grid min-h-[40px] grid-cols-[28px_1.6fr_110px_1.2fr_70px_60px] items-center gap-2.5 px-1">
-              <span className="font-mono text-[11.5px] text-[var(--pulse-faint)]">—</span>
-              <span className="font-sans text-[13px] italic text-[var(--pulse-faint)]">Other (unranked models)</span>
-              <span />
-              <span className="flex items-center gap-2">
-                <span className="h-1.5 min-w-[50px] flex-1 overflow-hidden rounded-full bg-[var(--pulse-border)]">
-                  <span
-                    className="block h-full rounded-full opacity-40"
-                    style={{ width: `${otherRow.token_share * 100}%`, background: 'var(--pulse-faint)' }}
-                  />
-                </span>
-                <span className="w-[42px] text-right font-mono text-[11.5px] text-[var(--pulse-muted)]">
-                  {pct(otherRow.token_share)}
-                </span>
-              </span>
-              <span />
-              <span />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+
+          {/* Mobile: stacked cards, no sparkline column (too narrow to read),
+              same pattern GeoPanel uses for its own mobile fallback. */}
+          <div className="sm:hidden">
+            {filtered.map((r) => {
+              const mover = moverByModel.get(r.model)
+              const delta = deltaFor(mover, window)
+              return (
+                <div key={r.model} className="border-b border-[var(--pulse-border)] py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      <span className="font-mono text-[11px] text-[var(--pulse-faint)]">{r.rank}</span>
+                      <span className="truncate font-sans text-[13px] text-[var(--pulse-text)]">
+                        {formatModelName(r.model)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 rounded bg-[var(--pulse-panel2)] px-1.5 py-0.5 font-sans text-[10.5px] text-[var(--pulse-muted)]">
+                      {mover?.provider ?? '—'}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--pulse-border)]">
+                      <span
+                        className="block h-full rounded-full bg-[var(--pulse-accent)]"
+                        style={{ width: `${Math.min(100, r.token_share * 100 * 5)}%` }}
+                      />
+                    </span>
+                    <span className="font-mono text-[11px] text-[var(--pulse-muted)]">{pct(r.token_share)}</span>
+                    <span className="font-mono text-[11px]" style={{ color: deltaColor(delta) }}>
+                      {WINDOW_LABEL[window]} {deltaRank(delta)}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+            {otherRow && !providerFilter && !search && (
+              <div className="flex items-center justify-between gap-2 py-2">
+                <span className="font-sans text-[13px] italic text-[var(--pulse-faint)]">Other (unranked models)</span>
+                <span className="font-mono text-[11px] text-[var(--pulse-muted)]">{pct(otherRow.token_share)}</span>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   )

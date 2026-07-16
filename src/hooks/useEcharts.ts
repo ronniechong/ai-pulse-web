@@ -3,10 +3,18 @@
 // the entire integration surface we need). Owns instance lifecycle
 // (init/dispose/resize) and option updates; callers just pass an option.
 import { useEffect, useRef } from 'react'
-import * as echarts from 'echarts'
+import * as echarts from 'echarts/core'
+import { BarChart, TreemapChart } from 'echarts/charts'
+import { GridComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import type { EChartsOption, ECharts } from 'echarts'
 import { PULSE_ECHARTS_THEME } from '@/lib/echartsTheme'
 import { COL, FONT_MONO } from '@/lib/tokens'
 
+// Only the chart/component types the two chart panels (RacingBar's bar
+// chart, ProviderShare's treemap) actually use — importing full `echarts`
+// pulled in every chart type and inflated the bundle by ~1MB.
+echarts.use([BarChart, TreemapChart, GridComponent, CanvasRenderer])
 echarts.registerTheme('pulse', PULSE_ECHARTS_THEME)
 
 const LOADING_OPTION = {
@@ -25,9 +33,9 @@ const LOADING_OPTION = {
  * permanently mounted (unlike a React-level skeleton swap, which would
  * detach the ref the one-time init effect depends on and the chart would
  * never come back). */
-export function useEcharts(option: echarts.EChartsOption, deps: unknown[], loading = false) {
+export function useEcharts(option: EChartsOption, deps: unknown[], loading = false) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const chartRef = useRef<echarts.ECharts | null>(null)
+  const chartRef = useRef<ECharts | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return

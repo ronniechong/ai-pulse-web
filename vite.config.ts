@@ -5,6 +5,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Served at ronniechong.com/ai-pulse-web/ — GitHub Pages project sites
+  // automatically inherit the user-site's custom domain.
+  base: '/ai-pulse-web/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
