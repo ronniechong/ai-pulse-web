@@ -4,6 +4,7 @@ import { useFormatters } from '@/lib/useFormatters'
 import { Button } from '@/components/ui/button'
 import { PanelSkeleton } from '@/components/PanelSkeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { trackEvent } from '@/lib/analytics'
 import type { AppRow } from '@/lib/types'
 
 type Tab = 'all' | 'coding' | 'cli-agent'
@@ -35,7 +36,10 @@ export function AppsLeaderboard() {
               size="sm"
               variant={tab === t.key ? 'default' : 'outline'}
               className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                setTab(t.key)
+                trackEvent(`apps-tab-${t.key}`)
+              }}
             >
               {t.label}
             </Button>

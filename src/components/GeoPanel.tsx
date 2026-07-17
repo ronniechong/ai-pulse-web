@@ -3,6 +3,7 @@ import { useDashboardData } from '@/lib/DashboardDataContext'
 import { useFormatters } from '@/lib/useFormatters'
 import { Button } from '@/components/ui/button'
 import { PanelSkeleton } from '@/components/PanelSkeleton'
+import { trackEvent } from '@/lib/analytics'
 
 type Mode = 'adoption' | 'downloads'
 
@@ -35,7 +36,10 @@ export function GeoPanel() {
             size="sm"
             variant={mode === 'adoption' ? 'default' : 'outline'}
             className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
-            onClick={() => setMode('adoption')}
+            onClick={() => {
+              setMode('adoption')
+              trackEvent('geo-mode-adoption')
+            }}
           >
             Adoption index
           </Button>
@@ -43,7 +47,10 @@ export function GeoPanel() {
             size="sm"
             variant={mode === 'downloads' ? 'default' : 'outline'}
             className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
-            onClick={() => setMode('downloads')}
+            onClick={() => {
+              setMode('downloads')
+              trackEvent('geo-mode-downloads')
+            }}
           >
             SDK downloads
           </Button>

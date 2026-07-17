@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Info } from 'lucide-react'
 import { useDashboardData } from '@/lib/DashboardDataContext'
 import { buildSparklines } from '@/lib/sparkline'
@@ -8,6 +8,7 @@ import { useFormatters } from '@/lib/useFormatters'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { trackEvent } from '@/lib/analytics'
 import type { Mover, RankingModel } from '@/lib/types'
 
 type Window = 'd1' | 'd7' | 'd30'
@@ -98,6 +99,9 @@ export function RankingsTable() {
   const [providerFilter, setProviderFilter] = useState<string | null>(null)
   const [window, setWindow] = useState<Window>('d1')
   const [expanded, setExpanded] = useState(false)
+  // Track "search used" once per first keystroke, not per-character — a
+  // per-keystroke event would flood GoatCounter with noise.
+  const searchTracked = useRef(false)
 
   const sparklines = useMemo(() => (rankingsHistory ? buildSparklines(rankingsHistory.rows) : new Map()), [rankingsHistory])
   const moverByModel = useMemo(() => new Map((facts?.rankings.movers ?? []).map((m) => [m.model, m])), [facts])
@@ -138,14 +142,24 @@ export function RankingsTable() {
         <Input
           placeholder="Search models or providers"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            if (e.target.value.trim() !== '' && !searchTracked.current) {
+              searchTracked.current = true
+              trackEvent('rankings-search')
+            }
+          }}
           className="w-[200px] border-[var(--pulse-border)] bg-[var(--pulse-panel2)] font-sans text-[11.5px] text-[var(--pulse-text)]"
         />
         <div className="flex flex-1 gap-1.5">
           {providers.map((p) => (
             <button
               key={p}
-              onClick={() => setProviderFilter(providerFilter === p ? null : p)}
+              onClick={() => {
+                const next = providerFilter === p ? null : p
+                setProviderFilter(next)
+                trackEvent(`rankings-filter-provider-${next ?? 'clear'}`)
+              }}
               className="rounded-full border px-2.5 py-0.5 font-sans text-[10.5px]"
               style={{
                 borderColor: 'var(--pulse-border)',
@@ -164,7 +178,10 @@ export function RankingsTable() {
               size="sm"
               variant={window === w ? 'default' : 'outline'}
               className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
-              onClick={() => setWindow(w)}
+              onClick={() => {
+                setWindow(w)
+                trackEvent(`rankings-window-${w}`)
+              }}
             >
               {WINDOW_LABEL[w]}
             </Button>
@@ -314,7 +331,10 @@ export function RankingsTable() {
 
           {canToggle && (
             <button
-              onClick={() => setExpanded((e) => !e)}
+              onClick={() => {
+                setExpanded(!expanded)
+                trackEvent(expanded ? 'rankings-collapse' : 'rankings-expand')
+              }}
               className="mt-1 w-full rounded py-2 text-center font-mono text-[11px] text-[var(--pulse-muted)] hover:text-[var(--pulse-text)]"
             >
               {expanded ? `Show top ${DEFAULT_VISIBLE_ROWS} only` : `Show all ${filtered.length} models`}

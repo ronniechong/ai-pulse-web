@@ -8,7 +8,11 @@ export function Footer() {
           credits
         </span>
         <div className="flex gap-3.5">
-          <a href="#about-methodology" className="font-sans text-[11px] text-[var(--pulse-accent)] underline">
+          <a
+            href="#about-methodology"
+            className="font-sans text-[11px] text-[var(--pulse-accent)] underline"
+            data-goatcounter-click="footer-about-methodology"
+          >
             About &amp; methodology
           </a>
           <span className="font-sans text-[11px] text-[var(--pulse-faint)] opacity-60">
@@ -17,6 +21,7 @@ export function Footer() {
           <a
             href="https://github.com/ronniechong/ai-pulse-data"
             className="font-sans text-[11px] text-[var(--pulse-accent)] underline"
+            data-goatcounter-click="footer-github-ai-pulse-data"
           >
             GitHub: ai-pulse-data
           </a>

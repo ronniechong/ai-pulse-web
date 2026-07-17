@@ -6,6 +6,7 @@ import { CHART_COL, FONT_MONO, FONT_SANS } from '@/lib/tokens'
 import { formatModelName } from '@/lib/format'
 import { useFormatters } from '@/lib/useFormatters'
 import { Button } from '@/components/ui/button'
+import { trackEvent } from '@/lib/analytics'
 
 interface Frame {
   date: string
@@ -39,6 +40,8 @@ export function RacingBar() {
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(1)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // One "scrub used" event per drag session, not per pixel dragged.
+  const scrubTracked = useRef(false)
 
   useEffect(() => {
     if (frames.length > 0) setIdx(frames.length - 1)
@@ -116,7 +119,10 @@ export function RacingBar() {
             size="sm"
             className="h-auto rounded px-3 py-1.5 font-mono text-[11px]"
             variant={playing ? 'default' : 'outline'}
-            onClick={() => setPlaying((p) => !p)}
+            onClick={() => {
+              setPlaying((p) => !p)
+              trackEvent(playing ? 'racing-bar-pause' : 'racing-bar-play')
+            }}
           >
             {playing ? 'Pause' : 'Play'}
           </Button>
@@ -128,6 +134,13 @@ export function RacingBar() {
             onChange={(e) => {
               setPlaying(false)
               setIdx(Number(e.target.value))
+              if (!scrubTracked.current) {
+                scrubTracked.current = true
+                trackEvent('racing-bar-scrub')
+              }
+            }}
+            onPointerUp={() => {
+              scrubTracked.current = false
             }}
             className="flex-1 accent-[var(--pulse-accent)]"
           />
@@ -138,7 +151,10 @@ export function RacingBar() {
                 size="sm"
                 variant={speed === s ? 'default' : 'outline'}
                 className="h-auto rounded px-2.5 py-1.5 font-mono text-[11px]"
-                onClick={() => setSpeed(s)}
+                onClick={() => {
+                  setSpeed(s)
+                  trackEvent(`racing-bar-speed-${s}x`)
+                }}
               >
                 {s}x
               </Button>

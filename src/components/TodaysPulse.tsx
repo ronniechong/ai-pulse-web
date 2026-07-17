@@ -63,7 +63,14 @@ export function TodaysPulse() {
             {TONE_LABEL[commentary.tone] ?? commentary.tone.toUpperCase()}
           </span>
           <span className="font-sans text-[10px] text-[var(--pulse-faint)]">
-            AI-generated · <a href="#about-methodology" className="text-[var(--pulse-accent)] underline">about</a>
+            AI-generated ·{' '}
+            <a
+              href="#about-methodology"
+              className="text-[var(--pulse-accent)] underline"
+              data-goatcounter-click="todays-pulse-about-methodology"
+            >
+              about
+            </a>
           </span>
         </div>
         <div className="mb-1.5 font-sans text-[23px] font-semibold leading-[1.3] text-[var(--pulse-text)]">
