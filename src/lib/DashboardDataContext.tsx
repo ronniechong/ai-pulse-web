@@ -29,6 +29,11 @@ interface DashboardData {
   facts: FactsData | null
   commentary: CommentaryData | null
   loading: boolean
+  // sdk-geo-trend.json is a growing daily history rollup (~2.8MB and
+  // climbing) — much larger than every other source. Tracked separately
+  // from `loading` so it never holds up the rest of the dashboard's first
+  // paint; SdkGeoTrendPanel is the only consumer of this flag.
+  sdkGeoTrendLoading: boolean
   error: string | null
 }
 
@@ -48,48 +53,24 @@ async function loadOptional<T>(url: string): Promise<T | null> {
   }
 }
 
-async function loadAll(): Promise<Omit<DashboardData, 'loading' | 'error'>> {
-  const [
-    manifest,
-    rankings,
-    rankingsHistory,
-    apps,
-    hfTrending,
-    sdkGeo,
-    sdkGeoTrend,
-    geoAdoption,
-    geoRegions,
-    occupations,
-    facts,
-    commentary,
-  ] = await Promise.all([
-    fetchJson<ManifestData>(MANIFEST_URL),
-    loadOptional<RankingsData>(`${DATA_BASE}/rankings.json`),
-    loadOptional<RankingsHistoryData>(`${DATA_BASE}/rankings-history.json`),
-    loadOptional<AppsData>(`${DATA_BASE}/apps.json`),
-    loadOptional<HFTrendingData>(`${DATA_BASE}/hf-trending.json`),
-    loadOptional<SdkGeoData>(`${DATA_BASE}/sdk-geo.json`),
-    loadOptional<SdkGeoTrendData>(`${DATA_BASE}/sdk-geo-trend.json`),
-    loadOptional<GeoAdoptionData>(`${DATA_BASE}/geo-adoption.json`),
-    loadOptional<GeoRegionsData>(`${DATA_BASE}/geo-regions.json`),
-    loadOptional<OccupationsData>(`${DATA_BASE}/occupations.json`),
-    loadOptional<FactsData>(`${DATA_BASE}/facts.json`),
-    loadOptional<CommentaryData>(`${DATA_BASE}/commentary.json`),
-  ])
-  return {
-    manifest,
-    rankings,
-    rankingsHistory,
-    apps,
-    hfTrending,
-    sdkGeo,
-    sdkGeoTrend,
-    geoAdoption,
-    geoRegions,
-    occupations,
-    facts,
-    commentary,
-  }
+type CoreData = Omit<DashboardData, 'loading' | 'error' | 'sdkGeoTrend' | 'sdkGeoTrendLoading'>
+
+async function loadAll(): Promise<CoreData> {
+  const [manifest, rankings, rankingsHistory, apps, hfTrending, sdkGeo, geoAdoption, geoRegions, occupations, facts, commentary] =
+    await Promise.all([
+      fetchJson<ManifestData>(MANIFEST_URL),
+      loadOptional<RankingsData>(`${DATA_BASE}/rankings.json`),
+      loadOptional<RankingsHistoryData>(`${DATA_BASE}/rankings-history.json`),
+      loadOptional<AppsData>(`${DATA_BASE}/apps.json`),
+      loadOptional<HFTrendingData>(`${DATA_BASE}/hf-trending.json`),
+      loadOptional<SdkGeoData>(`${DATA_BASE}/sdk-geo.json`),
+      loadOptional<GeoAdoptionData>(`${DATA_BASE}/geo-adoption.json`),
+      loadOptional<GeoRegionsData>(`${DATA_BASE}/geo-regions.json`),
+      loadOptional<OccupationsData>(`${DATA_BASE}/occupations.json`),
+      loadOptional<FactsData>(`${DATA_BASE}/facts.json`),
+      loadOptional<CommentaryData>(`${DATA_BASE}/commentary.json`),
+    ])
+  return { manifest, rankings, rankingsHistory, apps, hfTrending, sdkGeo, geoAdoption, geoRegions, occupations, facts, commentary }
 }
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
@@ -107,6 +88,7 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
     facts: null,
     commentary: null,
     loading: true,
+    sdkGeoTrendLoading: true,
     error: null,
   })
   const dataVersionRef = useRef<string | null>(null)
@@ -119,11 +101,20 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
         const manifest = await fetchJson<ManifestData>(MANIFEST_URL)
         if (manifest.data_version === dataVersionRef.current) return // silent no-op, data unchanged
         if (cancelled) return
-        if (showLoading) setState((s) => ({ ...s, loading: true, error: null }))
+        dataVersionRef.current = manifest.data_version
+        if (showLoading) setState((s) => ({ ...s, loading: true, sdkGeoTrendLoading: true, error: null }))
+
+        // Fired independently, not awaited here — sdk-geo-trend.json is
+        // ~2.8MB and shouldn't hold up loadAll()'s much smaller sources
+        // (or vice versa). Resolves into state on its own schedule;
+        // loadOptional already swallows failures into null.
+        loadOptional<SdkGeoTrendData>(`${DATA_BASE}/sdk-geo-trend.json`).then((sdkGeoTrend) => {
+          if (!cancelled) setState((s) => ({ ...s, sdkGeoTrend, sdkGeoTrendLoading: false }))
+        })
+
         const all = await loadAll()
         if (cancelled) return
-        dataVersionRef.current = all.manifest?.data_version ?? null
-        setState({ ...all, loading: false, error: null })
+        setState((s) => ({ ...s, ...all, loading: false, error: null }))
       } catch (e) {
         if (cancelled) return
         setState((s) => ({ ...s, loading: false, error: e instanceof Error ? e.message : String(e) }))

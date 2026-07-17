@@ -5,7 +5,6 @@ import { useEcharts } from '@/hooks/useEcharts'
 import { useFormatters } from '@/lib/useFormatters'
 import { REGION_COL } from '@/lib/tokens'
 import { Button } from '@/components/ui/button'
-import { PanelSkeleton } from '@/components/PanelSkeleton'
 import { trackEvent } from '@/lib/analytics'
 import type { SdkGeoTrendPoint } from '@/lib/types'
 
@@ -29,7 +28,7 @@ function buildSeries(points: SdkGeoTrendPoint[], selectedPackage: string) {
 }
 
 export function SdkGeoTrendPanel() {
-  const { sdkGeoTrend, loading } = useDashboardData()
+  const { sdkGeoTrend, sdkGeoTrendLoading: loading } = useDashboardData()
   const { compact, date } = useFormatters()
   const points = sdkGeoTrend?.series ?? []
   const packageOptions = useMemo(() => buildPackageOptions(points), [points])
@@ -72,9 +71,15 @@ export function SdkGeoTrendPanel() {
     [dates, byRegion],
   )
 
+  // ref must stay attached to a permanently-mounted div — useEcharts' mount
+  // effect (`[]` deps) runs exactly once and needs containerRef.current set
+  // on that very first render. Swapping to a different JSX branch (e.g. a
+  // loading-skeleton early-return) while data is still in flight means the
+  // ref never attaches on mount, echarts.init() never runs, and the chart
+  // stays permanently blank even after data arrives — same trap the hook's
+  // own doc comment warns about. Use ECharts' native showLoading() (via the
+  // last arg here) instead, same as ProviderShare/RacingBar.
   const ref = useEcharts(option, [dates, byRegion], loading && points.length === 0)
-
-  if (loading && points.length === 0) return <PanelSkeleton height={160} />
 
   return (
     <div className="min-w-[380px] flex-1 rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
@@ -98,30 +103,28 @@ export function SdkGeoTrendPanel() {
         </div>
       </div>
 
-      {dates.length === 0 ? (
-        <div className="flex h-[160px] items-center justify-center font-sans text-[13px] text-[var(--pulse-faint)]">
-          No trend data yet.
-        </div>
-      ) : (
-        <>
-          <div ref={ref} className="h-[220px] w-full" />
-          {/* Direct-labeled legend, not ECharts' own — matches this app's
-              other panels, and doubles as the required secondary encoding
-              for a categorical palette whose worst adjacent CVD pair sits
-              in the 8-12 floor band (see tokens.ts REGION_COL). */}
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            {REGIONS.map((region) => (
-              <span key={region} className="flex items-center gap-1.5 font-mono text-[10.5px] text-[var(--pulse-muted)]">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ background: REGION_COL[region] }}
-                  aria-hidden
-                />
-                {region}
-              </span>
-            ))}
+      <div className="relative h-[220px] w-full">
+        <div ref={ref} className="h-full w-full" />
+        {!loading && dates.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center font-sans text-[13px] text-[var(--pulse-faint)]">
+            No trend data yet.
           </div>
-        </>
+        )}
+      </div>
+
+      {dates.length > 0 && (
+        // Direct-labeled legend, not ECharts' own — matches this app's
+        // other panels, and doubles as the required secondary encoding for
+        // a categorical palette whose worst adjacent CVD pair sits in the
+        // 8-12 floor band (see tokens.ts REGION_COL).
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+          {REGIONS.map((region) => (
+            <span key={region} className="flex items-center gap-1.5 font-mono text-[10.5px] text-[var(--pulse-muted)]">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: REGION_COL[region] }} aria-hidden />
+              {region}
+            </span>
+          ))}
+        </div>
       )}
 
       <div className="mt-2 font-mono text-[10.5px] text-[var(--pulse-faint)]">
