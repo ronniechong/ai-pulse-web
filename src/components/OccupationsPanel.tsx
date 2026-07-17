@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 const DISPLAY_COUNT = 8
 
 export function OccupationsPanel() {
-  const { occupations, loading } = useDashboardData()
+  const { occupations, occupationsLoading: loading } = useDashboardData()
   const { pct, date } = useFormatters()
   const rows = occupations?.occupations.slice(0, DISPLAY_COUNT) ?? []
 

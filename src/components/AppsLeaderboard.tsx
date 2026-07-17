@@ -16,7 +16,7 @@ const TABS: { key: Tab; label: string }[] = [
 ]
 
 export function AppsLeaderboard() {
-  const { apps, loading } = useDashboardData()
+  const { apps, appsLoading: loading } = useDashboardData()
   const { compact, wholeNumber } = useFormatters()
   const [tab, setTab] = useState<Tab>('all')
 

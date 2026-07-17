@@ -3,7 +3,7 @@ import { useFormatters } from '@/lib/useFormatters'
 import { PanelSkeleton } from '@/components/PanelSkeleton'
 
 export function HFTrending() {
-  const { hfTrending, loading } = useDashboardData()
+  const { hfTrending, hfTrendingLoading: loading } = useDashboardData()
   const { compact } = useFormatters()
   const rows = hfTrending?.models.slice(0, 6) ?? []
 

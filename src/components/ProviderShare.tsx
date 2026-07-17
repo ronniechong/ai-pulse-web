@@ -6,7 +6,7 @@ import { CHART_COL, FONT_MONO, FONT_SANS, lerpColor } from '@/lib/tokens'
 import { useFormatters } from '@/lib/useFormatters'
 
 export function ProviderShare() {
-  const { facts, loading } = useDashboardData()
+  const { facts, factsLoading: loading } = useDashboardData()
   const { pct, decimal, decimalDelta } = useFormatters()
   const shares = facts?.rankings.provider_share ?? []
   const hhi = facts?.rankings.concentration

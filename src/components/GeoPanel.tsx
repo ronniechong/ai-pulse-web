@@ -13,7 +13,7 @@ function releaseToIso(release: string): string {
 }
 
 export function GeoPanel() {
-  const { geoRegions, geoAdoption, loading } = useDashboardData()
+  const { geoRegions, geoAdoption, geoRegionsLoading: loading } = useDashboardData()
   const { pct, compact, date } = useFormatters()
   const [mode, setMode] = useState<Mode>('adoption')
 

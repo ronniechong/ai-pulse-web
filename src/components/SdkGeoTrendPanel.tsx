@@ -42,7 +42,17 @@ export function SdkGeoTrendPanel() {
       grid: { left: 48, right: 16, top: 12, bottom: 28 },
       tooltip: {
         trigger: 'axis',
-        axisPointer: { type: 'cross', label: { formatter: (p) => date(String(p.value)) } },
+        axisPointer: {
+          type: 'cross',
+          // 'cross' shows a floating label on BOTH axes, and shares this one
+          // formatter across them — without branching on axisDimension, the
+          // y-axis's raw downloads number gets fed through date(), which
+          // renders "Invalid Date".
+          label: {
+            formatter: (p) =>
+              (p as { axisDimension?: string }).axisDimension === 'y' ? compact(Number(p.value)) : date(String(p.value)),
+          },
+        },
         formatter: (params) => {
           const list = Array.isArray(params) ? params : [params]
           if (list.length === 0) return ''

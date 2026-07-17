@@ -32,7 +32,7 @@ function buildFrames(rows: { date: string; model: string; token_share: number }[
 }
 
 export function RacingBar() {
-  const { rankingsHistory, loading } = useDashboardData()
+  const { rankingsHistory, rankingsHistoryLoading: loading } = useDashboardData()
   const { pct, date } = useFormatters()
   const frames = useMemo(() => (rankingsHistory ? buildFrames(rankingsHistory.rows) : []), [rankingsHistory])
 
