@@ -4,19 +4,19 @@
 // (init/dispose/resize) and option updates; callers just pass an option.
 import { useEffect, useRef } from 'react'
 import * as echarts from 'echarts/core'
-import { BarChart, TreemapChart } from 'echarts/charts'
+import { BarChart, LineChart, TreemapChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption, ECharts } from 'echarts'
 import { PULSE_ECHARTS_THEME } from '@/lib/echartsTheme'
 import { CHART_COL, FONT_MONO } from '@/lib/tokens'
 
-// Only the chart/component types the two chart panels (RacingBar's bar
-// chart, ProviderShare's treemap) actually use — importing full `echarts`
-// pulled in every chart type and inflated the bundle by ~1MB. TooltipComponent
-// is needed for ProviderShare's treemap tooltip (small tiles hide their
-// label but still need a way to surface their name/value on hover).
-echarts.use([BarChart, TreemapChart, GridComponent, TooltipComponent, CanvasRenderer])
+// Only the chart/component types the chart panels actually use — importing
+// full `echarts` pulled in every chart type and inflated the bundle by
+// ~1MB. TooltipComponent is needed for ProviderShare's treemap tooltip
+// (small tiles hide their label but still need a way to surface their
+// name/value on hover) and for SdkGeoTrend's crosshair tooltip.
+echarts.use([BarChart, LineChart, TreemapChart, GridComponent, TooltipComponent, CanvasRenderer])
 echarts.registerTheme('pulse', PULSE_ECHARTS_THEME)
 
 const LOADING_OPTION = {

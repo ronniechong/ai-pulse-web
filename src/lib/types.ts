@@ -90,6 +90,22 @@ export interface GeoRegionsData {
   }
 }
 
+export interface SdkGeoTrendPoint {
+  date: string
+  region: string
+  package: string
+  provider: string
+  downloads: number
+}
+
+export interface SdkGeoTrendData {
+  generated_at: string
+  source: string
+  regions: string[]
+  packages: string[]
+  series: SdkGeoTrendPoint[]
+}
+
 export interface Occupation {
   name: string
   soc_code: string

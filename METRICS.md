@@ -88,6 +88,29 @@ exists in this regional grouping — genuinely unclassifiable country codes
 (e.g. `AUS`, `NZL`, regional aggregates like `EU`) are logged and skipped,
 not force-mapped into a neighboring region.
 
+## SDK downloads by region (trend chart)
+
+**Definition:** Daily PyPI install counts per SDK package, summed into the
+same 8 world regions as the adoption/SDK-downloads toggle above, plotted as
+a line per region for one selected package at a time.
+
+**Source:** `sdk-geo-trend.json` (`SdkGeoTrendData.series[]`). Derived from
+`sdk-geo-history.json` (a cumulative rollup, not served to the client
+directly — 56MB+ and growing) via the same country→region crosswalk
+(`regions.py`) used by `geo-regions.json`. `sdk-geo-history.json` was
+backfilled once (2025-01-01 onward) in M2.5 and extended daily starting
+2026-07-18 — days before that date reflect the one-time backfill, not a
+gap in daily collection.
+
+**Grain:** 8 regions × 5 packages × 1 row/day. Daily.
+
+**Caveats:** Same "installs, not usage" caveat as the toggle above. The
+package selector shows one package's 8 region-lines at a time (not all 40
+at once) to stay readable — region colors are a validated categorical
+palette (see `tokens.ts` `REGION_COL`) whose worst adjacent pair sits in
+the CVD "floor" band, which is why the panel always pairs color with the
+legend + tooltip, never color alone.
+
 ## Occupations split
 
 **Definition:** Top 20 occupations by AI usage share, each split into

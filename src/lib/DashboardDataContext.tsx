@@ -12,6 +12,7 @@ import type {
   RankingsData,
   RankingsHistoryData,
   SdkGeoData,
+  SdkGeoTrendData,
 } from './types'
 
 interface DashboardData {
@@ -21,6 +22,7 @@ interface DashboardData {
   apps: AppsData | null
   hfTrending: HFTrendingData | null
   sdkGeo: SdkGeoData | null
+  sdkGeoTrend: SdkGeoTrendData | null
   geoAdoption: GeoAdoptionData | null
   geoRegions: GeoRegionsData | null
   occupations: OccupationsData | null
@@ -54,6 +56,7 @@ async function loadAll(): Promise<Omit<DashboardData, 'loading' | 'error'>> {
     apps,
     hfTrending,
     sdkGeo,
+    sdkGeoTrend,
     geoAdoption,
     geoRegions,
     occupations,
@@ -66,6 +69,7 @@ async function loadAll(): Promise<Omit<DashboardData, 'loading' | 'error'>> {
     loadOptional<AppsData>(`${DATA_BASE}/apps.json`),
     loadOptional<HFTrendingData>(`${DATA_BASE}/hf-trending.json`),
     loadOptional<SdkGeoData>(`${DATA_BASE}/sdk-geo.json`),
+    loadOptional<SdkGeoTrendData>(`${DATA_BASE}/sdk-geo-trend.json`),
     loadOptional<GeoAdoptionData>(`${DATA_BASE}/geo-adoption.json`),
     loadOptional<GeoRegionsData>(`${DATA_BASE}/geo-regions.json`),
     loadOptional<OccupationsData>(`${DATA_BASE}/occupations.json`),
@@ -79,6 +83,7 @@ async function loadAll(): Promise<Omit<DashboardData, 'loading' | 'error'>> {
     apps,
     hfTrending,
     sdkGeo,
+    sdkGeoTrend,
     geoAdoption,
     geoRegions,
     occupations,
@@ -95,6 +100,7 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
     apps: null,
     hfTrending: null,
     sdkGeo: null,
+    sdkGeoTrend: null,
     geoAdoption: null,
     geoRegions: null,
     occupations: null,

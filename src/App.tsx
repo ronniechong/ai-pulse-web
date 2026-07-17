@@ -18,6 +18,9 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 // initial bundle for every visitor even before they scroll to these panels.
 const ProviderShare = lazy(() => import('@/components/ProviderShare').then((m) => ({ default: m.ProviderShare })))
 const RacingBar = lazy(() => import('@/components/RacingBar').then((m) => ({ default: m.RacingBar })))
+const SdkGeoTrendPanel = lazy(() =>
+  import('@/components/SdkGeoTrendPanel').then((m) => ({ default: m.SdkGeoTrendPanel })),
+)
 
 function App() {
   return (
@@ -57,6 +60,11 @@ function App() {
             <div className="flex flex-wrap gap-5">
               <SectionErrorBoundary label="Geo panel">
                 <GeoPanel />
+              </SectionErrorBoundary>
+              <SectionErrorBoundary label="SDK downloads trend panel">
+                <Suspense fallback={<PanelSkeleton height={160} />}>
+                  <SdkGeoTrendPanel />
+                </Suspense>
               </SectionErrorBoundary>
               <SectionErrorBoundary label="Occupations panel">
                 <OccupationsPanel />

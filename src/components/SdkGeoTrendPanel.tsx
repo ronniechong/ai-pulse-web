@@ -1,0 +1,133 @@
+import { useMemo, useState } from 'react'
+import type { EChartsOption } from 'echarts'
+import { useDashboardData } from '@/lib/DashboardDataContext'
+import { useEcharts } from '@/hooks/useEcharts'
+import { useFormatters } from '@/lib/useFormatters'
+import { REGION_COL } from '@/lib/tokens'
+import { Button } from '@/components/ui/button'
+import { PanelSkeleton } from '@/components/PanelSkeleton'
+import { trackEvent } from '@/lib/analytics'
+import type { SdkGeoTrendPoint } from '@/lib/types'
+
+const REGIONS = Object.keys(REGION_COL)
+
+function buildPackageOptions(points: SdkGeoTrendPoint[]): { key: string; label: string }[] {
+  const seen = new Map<string, string>()
+  for (const p of points) if (!seen.has(p.package)) seen.set(p.package, p.provider)
+  return [...seen.entries()].map(([key, label]) => ({ key, label }))
+}
+
+function buildSeries(points: SdkGeoTrendPoint[], selectedPackage: string) {
+  const filtered = points.filter((p) => p.package === selectedPackage)
+  const dates = [...new Set(filtered.map((p) => p.date))].sort()
+  const byRegion = new Map<string, Map<string, number>>()
+  for (const p of filtered) {
+    if (!byRegion.has(p.region)) byRegion.set(p.region, new Map())
+    byRegion.get(p.region)!.set(p.date, p.downloads)
+  }
+  return { dates, byRegion }
+}
+
+export function SdkGeoTrendPanel() {
+  const { sdkGeoTrend, loading } = useDashboardData()
+  const { compact, date } = useFormatters()
+  const points = sdkGeoTrend?.series ?? []
+  const packageOptions = useMemo(() => buildPackageOptions(points), [points])
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
+  const activePackage = selectedPackage ?? packageOptions[0]?.key ?? ''
+
+  const { dates, byRegion } = useMemo(() => buildSeries(points, activePackage), [points, activePackage])
+
+  const option: EChartsOption = useMemo(
+    () => ({
+      grid: { left: 48, right: 16, top: 12, bottom: 28 },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'cross', label: { formatter: (p) => date(String(p.value)) } },
+        formatter: (params) => {
+          const list = Array.isArray(params) ? params : [params]
+          if (list.length === 0) return ''
+          const header = date(String((list[0] as { axisValue?: string }).axisValue))
+          const rows = list
+            .filter((p) => p.value != null)
+            .sort((a, b) => Number(b.value) - Number(a.value))
+            .map((p) => `${p.marker} ${p.seriesName}: ${compact(Number(p.value))}`)
+            .join('<br/>')
+          return `${header}<br/>${rows}`
+        },
+      },
+      xAxis: { type: 'category', data: dates, axisLabel: { formatter: (d: string) => date(d) } },
+      yAxis: { type: 'value', axisLabel: { formatter: (v: number) => compact(v) } },
+      series: REGIONS.map((region) => ({
+        name: region,
+        type: 'line',
+        showSymbol: false,
+        lineStyle: { width: 2, color: REGION_COL[region] },
+        itemStyle: { color: REGION_COL[region] },
+        data: dates.map((d) => byRegion.get(region)?.get(d) ?? null),
+        connectNulls: true,
+      })),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dates, byRegion],
+  )
+
+  const ref = useEcharts(option, [dates, byRegion], loading && points.length === 0)
+
+  if (loading && points.length === 0) return <PanelSkeleton height={160} />
+
+  return (
+    <div className="min-w-[380px] flex-1 rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="font-sans text-[13px] font-semibold text-[var(--pulse-text)]">SDK downloads by region</span>
+        <div className="flex flex-wrap gap-1">
+          {packageOptions.map((pkg) => (
+            <Button
+              key={pkg.key}
+              size="sm"
+              variant={pkg.key === activePackage ? 'default' : 'outline'}
+              className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
+              onClick={() => {
+                setSelectedPackage(pkg.key)
+                trackEvent(`sdk-geo-trend-package-${pkg.key}`)
+              }}
+            >
+              {pkg.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {dates.length === 0 ? (
+        <div className="flex h-[160px] items-center justify-center font-sans text-[13px] text-[var(--pulse-faint)]">
+          No trend data yet.
+        </div>
+      ) : (
+        <>
+          <div ref={ref} className="h-[220px] w-full" />
+          {/* Direct-labeled legend, not ECharts' own — matches this app's
+              other panels, and doubles as the required secondary encoding
+              for a categorical palette whose worst adjacent CVD pair sits
+              in the 8-12 floor band (see tokens.ts REGION_COL). */}
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+            {REGIONS.map((region) => (
+              <span key={region} className="flex items-center gap-1.5 font-mono text-[10.5px] text-[var(--pulse-muted)]">
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: REGION_COL[region] }}
+                  aria-hidden
+                />
+                {region}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="mt-2 font-mono text-[10.5px] text-[var(--pulse-faint)]">
+        PyPI SDK installs via ClickPy, summed per region · these 8 regions don&apos;t cover the whole world (no Oceania/Pacific
+        bucket) · daily from {dates[0] ? date(dates[0]) : '—'}
+      </div>
+    </div>
+  )
+}

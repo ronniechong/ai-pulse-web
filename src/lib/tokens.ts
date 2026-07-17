@@ -70,5 +70,26 @@ export function lerpColor(from: string, to: string, t: number): string {
   return `rgb(${mix(r1, r2)}, ${mix(g1, g2)}, ${mix(b1, b2)})`
 }
 
+/** Categorical palette for the 8 world regions (SDK-downloads trend chart).
+ * Already concrete hex (not oklch), so unlike COL these go straight into
+ * ECharts series colors without toRgb() — zrender parses hex natively.
+ * Validated with the dataviz skill's six-check validator against this
+ * app's actual dark panel surface (#12161c): lightness band, chroma floor,
+ * and contrast all pass; worst adjacent CVD ΔE is 10.3 (protan), the
+ * 8-12 "floor" band that's legal only with secondary encoding — hence the
+ * trend chart always pairs this with a legend + tooltip, never color
+ * alone. Slot order is the CVD-safety mechanism, not cosmetic; don't
+ * reorder without re-running the validator. */
+export const REGION_COL: Record<string, string> = {
+  'North America': '#3987e5',
+  Europe: '#199e70',
+  'East Asia': '#c98500',
+  'South Asia': '#008300',
+  'SE Asia': '#9085e9',
+  'Middle East': '#e66767',
+  'Latin America': '#d55181',
+  Africa: '#d95926',
+}
+
 // Number/percent/date formatting lives in lib/useFormatters.ts (FormatJS) —
 // this module only owns visual tokens (colors, fonts).
