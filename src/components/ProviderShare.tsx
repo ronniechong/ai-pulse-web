@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { EChartsOption } from 'echarts'
 import { useDashboardData } from '@/lib/DashboardDataContext'
 import { useEcharts } from '@/hooks/useEcharts'
-import { CHART_COL, FONT_MONO, FONT_SANS, lerpColor } from '@/lib/tokens'
+import { CHART_COL, FONT_MONO, FONT_SANS, deltaColor, lerpColor } from '@/lib/tokens'
 import { useFormatters } from '@/lib/useFormatters'
 import { Button } from '@/components/ui/button'
 import { trackEvent } from '@/lib/analytics'
@@ -16,17 +16,6 @@ function deltaFor(p: ProviderShareEntry, window: Window): number | null {
   if (window === 'd1') return p.delta_1d
   if (window === 'd7') return p.delta_7d
   return p.delta_30d
-}
-
-/** Border color as the momentum signal, not tile text — treemap tiles are
- * already tight on room for name + share% (small tiles hide the label
- * entirely), so a third text line for the delta would either overflow or
- * never render on the tiles that need it least (the big ones already
- * fitting two lines). No delta / a flat 0 keeps the original neutral
- * border so early-burn-in and quiet-window tiles look unchanged. */
-function borderColorFor(delta: number | null): string {
-  if (delta === null || delta === undefined || delta === 0) return CHART_COL.panel
-  return delta > 0 ? CHART_COL.up : CHART_COL.down
 }
 
 export function ProviderShare() {
@@ -53,7 +42,12 @@ export function ProviderShare() {
           const i = (params as { dataIndex?: number }).dataIndex
           const p = i != null ? shares[i] : undefined
           if (!p) return ''
-          return `${p.provider}: ${pct(p.token_share_today)}<br/>${WINDOW_LABEL[window]}: ${deltaPct(deltaFor(p, window))}`
+          const delta = deltaFor(p, window)
+          // This tooltip is a real DOM element (not canvas), so raw oklch
+          // via deltaColor() is fine here — the browser parses it natively;
+          // CHART_COL's rgb-resolved variants are only needed inside actual
+          // chart option colors (see tokens.ts).
+          return `${p.provider}: ${pct(p.token_share_today)}<br/>${WINDOW_LABEL[window]}: <span style="color:${deltaColor(delta)}">${deltaPct(delta)}</span>`
         },
       },
       series: [
@@ -97,19 +91,13 @@ export function ProviderShare() {
           // colorMappingBy, which cycles through unrelated hues instead of
           // shading smoothly) so the biggest provider is visually obvious
           // at a glance, not just "the biggest rectangle" among identically
-          // -shaded ones. Border color is a third, independent encoding —
-          // momentum for the selected window, up/down/neutral.
-          data: shares.map((p) => {
-            const delta = deltaFor(p, window)
-            return {
-              name: p.provider,
-              value: p.token_share_today,
-              itemStyle: {
-                color: lerpColor(CHART_COL.panel2, CHART_COL.accent, p.token_share_today / maxShare),
-                borderColor: borderColorFor(delta),
-              },
-            }
-          }),
+          // -shaded ones. Momentum (the Δ toggle) is tooltip-only, not a
+          // tile encoding — see the formatter above.
+          data: shares.map((p) => ({
+            name: p.provider,
+            value: p.token_share_today,
+            itemStyle: { color: lerpColor(CHART_COL.panel2, CHART_COL.accent, p.token_share_today / maxShare) },
+          })),
         },
       ],
     }),
@@ -164,8 +152,7 @@ export function ProviderShare() {
       </div>
       {shares.length > 0 && (
         <div className="mt-2 font-mono text-[10.5px] text-[var(--pulse-faint)]">
-          Tile size &amp; fill = today&apos;s share · border color = {WINDOW_LABEL[window]} momentum (green up, red down,
-          neutral if flat or not enough history) · hover a tile for exact figures
+          Tile size &amp; fill = today&apos;s share · hover a tile for {WINDOW_LABEL[window]} momentum
         </div>
       )}
     </div>

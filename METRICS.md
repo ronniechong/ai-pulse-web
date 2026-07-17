@@ -47,12 +47,10 @@ so a brand-new provider may briefly appear under its raw slug.
 
 **Momentum (added 2026-07-18):** a Δ1d/Δ7d/Δ30d toggle switches which of
 `provider_share[].delta_1d/7d/30d` (already computed, previously unused)
-drives the tile border color — green for a positive delta in the selected
-window, red for negative, unchanged (neutral) border for exactly 0 or
-`null` (not enough history yet). Deliberately not a fourth text line on
-the tile: tiles are already tight on room for name + share%, and small
-tiles already hide their label entirely — the exact delta figure is
-always available in the tooltip regardless of tile size.
+appears in the tooltip, color-coded (green positive, red negative). Not a
+tile-level encoding — tiles are already tight on room for name + share%,
+and small tiles hide their label entirely, so both the delta figure and
+its color live only in the tooltip regardless of tile size.
 
 ## Rankings over time (racing bar)
 
