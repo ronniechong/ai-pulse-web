@@ -45,6 +45,15 @@ from a hand-maintained mapping table (`providers.py` in `ai-pulse-data`);
 unmapped prefixes fail open (raw prefix shown, logged for manual curation),
 so a brand-new provider may briefly appear under its raw slug.
 
+**Momentum (added 2026-07-18):** a Δ1d/Δ7d/Δ30d toggle switches which of
+`provider_share[].delta_1d/7d/30d` (already computed, previously unused)
+drives the tile border color — green for a positive delta in the selected
+window, red for negative, unchanged (neutral) border for exactly 0 or
+`null` (not enough history yet). Deliberately not a fourth text line on
+the tile: tiles are already tight on room for name + share%, and small
+tiles already hide their label entirely — the exact delta figure is
+always available in the tooltip regardless of tile size.
+
 ## Rankings over time (racing bar)
 
 **Definition:** Top 8 models by token share, animated across every day of
