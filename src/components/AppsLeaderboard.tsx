@@ -15,13 +15,29 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'cli-agent', label: 'CLI agent' },
 ]
 
+type Metric = 'tokens' | 'requests'
+
+const METRIC_LABEL: Record<Metric, string> = { tokens: 'Tokens', requests: 'Requests' }
+
+function valueFor(app: AppRow, metric: Metric): number {
+  return metric === 'tokens' ? app.total_tokens : app.total_requests
+}
+
 export function AppsLeaderboard() {
   const { apps, appsLoading: loading } = useDashboardData()
   const { compact, wholeNumber } = useFormatters()
   const [tab, setTab] = useState<Tab>('all')
+  const [metric, setMetric] = useState<Metric>('tokens')
 
-  const rows = (apps?.apps ?? []).filter((a) => tab === 'all' || (a.categories ?? []).includes(tab))
-  const maxTokens = Math.max(1, ...rows.map((a) => a.total_tokens))
+  // Ranking by requests instead of tokens surfaces genuinely different
+  // apps — a high-request/low-token app is many small interactions (a
+  // chat UI), a low-request/high-token app is few huge jobs (a batch/agent
+  // integration) — so this re-sorts rather than reusing apps.json's own
+  // (tokens-based) `rank` field.
+  const rows = (apps?.apps ?? [])
+    .filter((a) => tab === 'all' || (a.categories ?? []).includes(tab))
+    .sort((a, b) => valueFor(b, metric) - valueFor(a, metric))
+  const maxValue = Math.max(1, ...rows.map((a) => valueFor(a, metric)))
 
   if (loading && rows.length === 0) return <PanelSkeleton height={160} />
 
@@ -29,21 +45,45 @@ export function AppsLeaderboard() {
     <div className="min-w-[380px] flex-1 rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <span className="font-sans text-[13px] font-semibold text-[var(--pulse-text)]">Apps leaderboard</span>
-        <div className="flex gap-1">
-          {TABS.map((t) => (
-            <Button
-              key={t.key}
-              size="sm"
-              variant={tab === t.key ? 'default' : 'outline'}
-              className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
-              onClick={() => {
-                setTab(t.key)
-                trackEvent(`apps-tab-${t.key}`)
-              }}
-            >
-              {t.label}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1">
+            {TABS.map((t) => (
+              <Button
+                key={t.key}
+                size="sm"
+                variant={tab === t.key ? 'default' : 'outline'}
+                className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
+                onClick={() => {
+                  setTab(t.key)
+                  trackEvent(`apps-tab-${t.key}`)
+                }}
+              >
+                {t.label}
+              </Button>
+            ))}
+          </div>
+          {/* Divider — without it, this button group and the category tabs
+              to its left read as one continuous row of 5 options instead
+              of two separate controls (category filter vs. ranking
+              metric), especially with both groups' active state using the
+              same highlight color. */}
+          <div className="h-5 w-px bg-[var(--pulse-border)]" aria-hidden />
+          <div className="flex gap-1">
+            {(Object.keys(METRIC_LABEL) as Metric[]).map((m) => (
+              <Button
+                key={m}
+                size="sm"
+                variant={metric === m ? 'default' : 'outline'}
+                className="h-auto rounded px-2.5 py-1 font-mono text-[11px]"
+                onClick={() => {
+                  setMetric(m)
+                  trackEvent(`apps-metric-${m}`)
+                }}
+              >
+                {METRIC_LABEL[m]}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
       {rows.length === 0 ? (
@@ -65,24 +105,26 @@ export function AppsLeaderboard() {
                     <span className="h-1.5 min-w-[50px] flex-1 overflow-hidden rounded-full bg-[var(--pulse-border)]">
                       <span
                         className="block h-full rounded-full bg-[var(--pulse-accent)]"
-                        style={{ width: `${(a.total_tokens / maxTokens) * 100}%` }}
+                        style={{ width: `${(valueFor(a, metric) / maxValue) * 100}%` }}
                       />
                     </span>
                     <span className="w-[48px] text-right font-mono text-[11px] text-[var(--pulse-muted)]">
-                      {compact(a.total_tokens)}
+                      {compact(valueFor(a, metric))}
                     </span>
                   </span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[240px] font-sans text-[11.5px] leading-snug" side="top">
-                  <AppTooltipContent app={a} wholeNumber={wholeNumber} />
+                  <AppTooltipContent app={a} wholeNumber={wholeNumber} compact={compact} />
                 </TooltipContent>
               </Tooltip>
             </div>
           ))}
           <div className="mt-2 font-mono text-[10.5px] text-[var(--pulse-faint)]">
-            Ranked by total token volume routed through OpenRouter that day — not user count or installs. A single
-            high-throughput integration can outrank a broadly-used app. Bar width is relative to the top app in this
-            tab, not a share of all traffic.
+            Ranked by total {metric === 'tokens' ? 'token volume' : 'request count'} routed through OpenRouter that
+            day — not user count or installs. Switching Tokens/Requests can reorder the list: a
+            high-request/low-token app is many small interactions (a chat UI), a low-request/high-token app is few
+            huge jobs (a batch or agent integration) — see each app&apos;s avg tokens/request in the tooltip. Bar
+            width is relative to the top app in this tab, not a share of all traffic.
           </div>
         </>
       )}
@@ -93,16 +135,19 @@ export function AppsLeaderboard() {
 function AppTooltipContent({
   app,
   wholeNumber,
+  compact,
 }: {
   app: AppRow
   wholeNumber: (v: number) => string
+  compact: (v: number) => string
 }) {
   return (
     <div className="space-y-1">
       <div className="font-semibold">{app.app_name}</div>
-      <div>Rank #{app.rank}</div>
+      <div>Tokens rank #{app.rank}</div>
       <div>{wholeNumber(app.total_tokens)} tokens</div>
       <div>{wholeNumber(app.total_requests)} requests</div>
+      <div>~{compact(app.total_tokens / app.total_requests)} tokens/request</div>
       {app.categories.length > 0 && <div className="pt-0.5 opacity-80">{app.categories.join(', ')}</div>}
     </div>
   )

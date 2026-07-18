@@ -136,9 +136,9 @@ this is Anthropic Economic Index data, not a market-wide occupation study.
 
 ## Apps leaderboard + category tabs
 
-**Definition:** Top apps by token volume routed through OpenRouter, taggable
-by category (`coding`, `creative`, `productivity`, `entertainment`) and the
-`cli-agent` subcategory.
+**Definition:** Top apps by token volume or request count routed through
+OpenRouter, taggable by category (`coding`, `creative`, `productivity`,
+`entertainment`) and the `cli-agent` subcategory.
 
 **Source:** `apps.json` (`AppsData.apps[]`, fields `rank`, `app_id`,
 `app_name`, `total_tokens`, `total_requests`, `categories[]`).
@@ -149,7 +149,19 @@ by category (`coding`, `creative`, `productivity`, `entertainment`) and the
 day) — untagged apps only ever appear under "All," which is expected
 behavior, not missing data. App-level and model-level rankings can't be
 cross-tabbed — OpenRouter's public API has no "which model does this app
-route to" endpoint, confirmed live during M1.
+route to" endpoint, confirmed live during M1. `rank` in the raw data is
+always OpenRouter's own tokens-based rank, shown in the tooltip as "Tokens
+rank" regardless of which metric the Tokens/Requests toggle is currently
+sorting by.
+
+**Tokens-vs-requests divergence (added 2026-07-18):** a Tokens/Requests
+toggle re-sorts the list client-side by the selected metric (not
+`apps.json`'s own tokens-based `rank`) — switching can meaningfully
+reorder the leaderboard, since a high-request/low-token app is many small
+interactions (a chat UI) and a low-request/high-token app is few huge jobs
+(a batch or agent integration). The tooltip always shows an approximate
+avg tokens/request figure (`total_tokens ÷ total_requests`) as the
+concrete "intensity" number behind that distinction.
 
 ## Hugging Face trending
 
