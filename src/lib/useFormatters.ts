@@ -22,6 +22,20 @@ export function useFormatters() {
     )
   }
 
+  /** Signed relative change (e.g. "+8.4%", "-16.0%") — unlike deltaPct,
+   * no "pp" suffix, because this is a ratio/relative change (this day's
+   * avg vs. the overall avg), not a percentage-POINT difference between
+   * two percentages. */
+  function relativePct(value: number | null | undefined, digits = 1): string {
+    if (value === null || value === undefined) return '—'
+    return intl.formatNumber(value, {
+      style: 'percent',
+      signDisplay: 'exceptZero',
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    })
+  }
+
   function deltaRank(value: number | null | undefined): string {
     if (value === null || value === undefined || value === 0) return '—'
     return intl.formatNumber(value, { signDisplay: 'exceptZero' })
@@ -73,5 +87,5 @@ export function useFormatters() {
     return intl.formatRelativeTime(-Math.round(diffHours / 24), 'day', { numeric: 'auto' })
   }
 
-  return { pct, deltaPct, deltaRank, compact, wholeNumber, decimal, decimalDelta, date, dateTime, relativeTime }
+  return { pct, deltaPct, relativePct, deltaRank, compact, wholeNumber, decimal, decimalDelta, date, dateTime, relativeTime }
 }

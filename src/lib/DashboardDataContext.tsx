@@ -10,6 +10,7 @@ import type {
   ManifestData,
   OccupationsData,
   RankingsData,
+  RankingsDailyTotalsData,
   RankingsHistoryData,
   SdkGeoData,
   SdkGeoTrendData,
@@ -21,6 +22,8 @@ interface DashboardData {
   rankingsLoading: boolean
   rankingsHistory: RankingsHistoryData | null
   rankingsHistoryLoading: boolean
+  rankingsDailyTotals: RankingsDailyTotalsData | null
+  rankingsDailyTotalsLoading: boolean
   apps: AppsData | null
   appsLoading: boolean
   hfTrending: HFTrendingData | null
@@ -64,6 +67,8 @@ const INITIAL_STATE: DashboardData = {
   rankingsLoading: true,
   rankingsHistory: null,
   rankingsHistoryLoading: true,
+  rankingsDailyTotals: null,
+  rankingsDailyTotalsLoading: true,
   apps: null,
   appsLoading: true,
   hfTrending: null,
@@ -116,6 +121,7 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
           ...(showLoading && {
             rankingsLoading: true,
             rankingsHistoryLoading: true,
+            rankingsDailyTotalsLoading: true,
             appsLoading: true,
             hfTrendingLoading: true,
             sdkGeoLoading: true,
@@ -133,6 +139,9 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
         )
         loadSource<RankingsHistoryData>(`${DATA_BASE}/rankings-history.json`, (rankingsHistory) =>
           setState((s) => ({ ...s, rankingsHistory, rankingsHistoryLoading: false })),
+        )
+        loadSource<RankingsDailyTotalsData>(`${DATA_BASE}/rankings-totals-history.json`, (rankingsDailyTotals) =>
+          setState((s) => ({ ...s, rankingsDailyTotals, rankingsDailyTotalsLoading: false })),
         )
         loadSource<AppsData>(`${DATA_BASE}/apps.json`, (apps) => setState((s) => ({ ...s, apps, appsLoading: false })))
         loadSource<HFTrendingData>(`${DATA_BASE}/hf-trending.json`, (hfTrending) =>

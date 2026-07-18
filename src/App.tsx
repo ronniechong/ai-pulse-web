@@ -7,6 +7,8 @@ import { GeoPanel } from '@/components/GeoPanel'
 import { OccupationsPanel } from '@/components/OccupationsPanel'
 import { AppsLeaderboard } from '@/components/AppsLeaderboard'
 import { HFTrending } from '@/components/HFTrending'
+import { RankVolatility } from '@/components/RankVolatility'
+import { WeekdaySeasonality } from '@/components/WeekdaySeasonality'
 import { About } from '@/components/About'
 import { Footer } from '@/components/Footer'
 import { SectionLabel } from '@/components/SectionLabel'
@@ -53,6 +55,18 @@ function App() {
                 <RacingBar />
               </Suspense>
             </SectionErrorBoundary>
+            {/* Stacked below, not squeezed alongside RacingBar — it's a
+                wide hero chart that wants full width to show 8 animated
+                bars clearly. RankVolatility and WeekdaySeasonality are
+                similar-weight list panels, so they share a row together. */}
+            <div className="mt-5 flex flex-wrap gap-5">
+              <SectionErrorBoundary label="Rank volatility">
+                <RankVolatility />
+              </SectionErrorBoundary>
+              <SectionErrorBoundary label="Weekday seasonality">
+                <WeekdaySeasonality />
+              </SectionErrorBoundary>
+            </div>
           </section>
 
           <section id="geo" className="mx-auto max-w-[1200px] border-b border-[var(--pulse-border)] px-6 py-8">

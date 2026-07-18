@@ -71,6 +71,61 @@ commentary exists for backfilled days.
 visibility below rank 50, so an older model re-entering the top 50 looks
 identical to a genuinely new one.
 
+## Most volatile rankings (added 2026-07-18)
+
+**Definition:** Population standard deviation of a model's daily rank
+across its full available history — how much it bounces around the
+leaderboard over time, not just a recent 1d/7d/30d move. Top 8 by
+stdev, each row also shows the actual min–max rank range it has spanned.
+
+**Source:** Computed entirely client-side from `rankings-history.json`
+(same file `RacingBar` already fetches in full — no new backend data or
+pipeline step needed for this panel).
+
+**Grain:** One score per model, computed over its entire history in the
+rollup (2025-01-01 onward where backfilled).
+
+**Caveats:** Requires 30+ tracked days of history to appear, so a
+brand-new entrant swinging from #51 to #12 on day 2 doesn't dominate the
+list on a couple of noisy data points — this intentionally favors
+established models with a real track record of movement over noisy new
+ones. The `"other"` aggregate row is excluded (not a real model).
+
+## Usage by day of week (added 2026-07-18)
+
+**Definition:** Average total daily token volume (summed across every
+tracked model, including `"other"`) by day of week — is usage actually
+lower on weekends, higher on weekdays?
+
+**Source:** `rankings-totals-history.json` (`RankingsDailyTotalsData.rows[]`,
+fields `date`, `total_tokens`, `source`). A new small rollup, not the same
+file `rankings-history.json`/`RacingBar` use — that file only stores each
+model's normalized `token_share` (relative within each day), which
+mathematically cancels out any real change in the day's absolute volume
+(live-checked first: weekday/weekend on token_share alone was flat,
+~17-18% every day, no real signal — confirming the normalized field
+genuinely can't answer this question). `rankings-totals-history.json`
+instead sums the same raw `total_tokens` the pipeline already fetches
+per-model each day (before it gets divided down into `token_share`) —
+no new API calls, just kept instead of discarded. Backfilled to
+2025-01-01 the same way `rankings-history.json` was (M2.5), then extended
+daily from the same window fetch `run_rankings_history_rollup` already
+makes.
+
+**Grain:** One row per day (not per model) — stays tiny (~560 rows, tens
+of KB) even over 18 months of history.
+
+**Caveats:** This is a naive day-of-week average, **not detrended**
+against the platform's own growth over the tracked window (total daily
+volume grew roughly 180x from 2025-01-01 to today). Each weekday gets
+~80 samples spread evenly across that whole window, which limits how much
+growth alone can bias the result, but this is a documented simplification,
+not a seasonally-adjusted figure. Live-checked against real data
+(2026-07-18): weekdays run +2% to +8% above the overall average, weekends
+run -13% to -16% below — directionally consistent with this dashboard's
+existing "OpenRouter selection bias toward API developers, not end
+consumers" caveat.
+
 ## Where & who — adoption / SDK-downloads toggle
 
 **Definition:** Two different signals bucketed into the same 8 world
@@ -179,6 +234,17 @@ snapshots), so this panel's history starts from the pipeline's real day one.
 **Caveats:** Downloads measure open-weights pulls, not inference usage — a
 heavily-downloaded model may be rarely run, and a model served entirely via
 API (never downloaded) won't appear here at all.
+
+**Task/library filter (added 2026-07-18):** a filter row (All + up to 4
+task types) built dynamically from whichever `pipeline_tag` values
+actually appear in today's top 50, most-frequent first — not a hardcoded
+list, since HF's task taxonomy is open-ended (dozens of possible values)
+unlike `apps.json`'s fixed OpenRouter category set. Each visible row also
+shows its `pipeline_tag`/`library_name` (where HF reports them) as a small
+caption under the model name. Complements the OpenRouter-centric panels
+elsewhere on the dashboard, which are entirely chat/agent-model framed —
+this surfaces the image/video/audio/embedding side of what's trending in
+open weights.
 
 ## AI commentary (Today's Pulse)
 

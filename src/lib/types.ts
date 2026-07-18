@@ -202,6 +202,17 @@ export interface RankingsHistoryData {
   rows: RankingsHistoryRow[]
 }
 
+export interface RankingsDailyTotalRow {
+  date: string
+  total_tokens: number
+  source: 'backfill' | 'pipeline'
+}
+
+export interface RankingsDailyTotalsData {
+  generated_at: string
+  rows: RankingsDailyTotalRow[]
+}
+
 export type SourceStatus = 'ok' | 'degraded' | 'skipped'
 
 export interface ManifestSource {
