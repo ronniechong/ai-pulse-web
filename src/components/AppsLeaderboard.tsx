@@ -124,7 +124,8 @@ export function AppsLeaderboard() {
             day — not user count or installs. Switching Tokens/Requests can reorder the list: a
             high-request/low-token app is many small interactions (a chat UI), a low-request/high-token app is few
             huge jobs (a batch or agent integration) — see each app&apos;s avg tokens/request in the tooltip. Bar
-            width is relative to the top app in this tab, not a share of all traffic.
+            width is relative to the top app in this tab, not a share of all traffic. Category tagging (Coding/CLI
+            agent) only covers a subset of apps on a typical day — untagged apps only show under &quot;All&quot;.
           </div>
         </>
       )}

@@ -152,7 +152,8 @@ export function ProviderShare() {
       </div>
       {shares.length > 0 && (
         <div className="mt-2 font-mono text-[10.5px] text-[var(--pulse-faint)]">
-          Tile size &amp; fill = today&apos;s share · hover a tile for {WINDOW_LABEL[window]} momentum
+          Tile size &amp; fill = today&apos;s share · hover a tile for {WINDOW_LABEL[window]} momentum · HHI excludes
+          the &quot;other&quot; aggregate bucket
         </div>
       )}
     </div>

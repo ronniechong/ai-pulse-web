@@ -6,6 +6,10 @@ const CAVEATS = [
   'Hugging Face downloads measure open-weights pulls, not inference usage.',
   'PyPI SDK-download counts (ClickPy) measure package installs — CI/CD inflation is possible — not actual API usage.',
   'Geographic adoption and SDK-download panels use different upstream country-code standards (ISO alpha-3 vs alpha-2) and are aggregated into the same 8 regions via a hand-authored crosswalk — there is no Oceania/Pacific bucket in that grouping.',
+  'Anthropic Economic Index panels (geographic adoption, occupations) reflect Claude usage specifically, not AI adoption or automation across the industry.',
+  'The provider-concentration index (HHI) excludes the "other" aggregate bucket, same as the provider-share treemap it sits above.',
+  'App category tags (Coding / CLI agent) only cover a subset of apps on a given day — untagged apps only surface under the "All" tab.',
+  '"New entrant" (Today\'s Pulse, rankings history) means newly in the top 50, not newly released — OpenRouter\'s API has no visibility below rank 50, so a returning model looks identical to a genuinely new one.',
 ]
 
 export function About() {
@@ -64,7 +68,8 @@ export function About() {
             </li>
             <li>
               <span className="text-[var(--pulse-text)]">Anthropic Economic Index</span> —
-              geographic adoption and occupation usage/automation split, © Anthropic, CC-BY.
+              Claude usage geographic adoption and occupation usage/automation split, © Anthropic,
+              CC-BY.
             </li>
           </ul>
         </div>

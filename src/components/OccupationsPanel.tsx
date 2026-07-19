@@ -19,8 +19,8 @@ export function OccupationsPanel() {
       </div>
       {occupations && (
         <div className="mb-3 font-mono text-[10.5px] text-[var(--pulse-faint)]">
-          Vintage: Economic Index {date(occupations.period.start)}..{date(occupations.period.end)} · static between
-          quarterly releases
+          Claude usage only, not AI adoption broadly · Economic Index {date(occupations.period.start)}..
+          {date(occupations.period.end)} · static between quarterly releases
         </div>
       )}
 
