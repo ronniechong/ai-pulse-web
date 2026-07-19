@@ -34,8 +34,19 @@ export function SdkGeoTrendPanel() {
   const packageOptions = useMemo(() => buildPackageOptions(points), [points])
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
   const activePackage = selectedPackage ?? packageOptions[0]?.key ?? ''
+  const [hiddenRegions, setHiddenRegions] = useState<Set<string>>(new Set())
 
   const { dates, byRegion } = useMemo(() => buildSeries(points, activePackage), [points, activePackage])
+
+  const toggleRegion = (region: string) => {
+    setHiddenRegions((prev) => {
+      const next = new Set(prev)
+      if (next.has(region)) next.delete(region)
+      else next.add(region)
+      return next
+    })
+    trackEvent(`sdk-geo-trend-region-toggle-${region}`)
+  }
 
   const option: EChartsOption = useMemo(
     () => ({
@@ -67,7 +78,7 @@ export function SdkGeoTrendPanel() {
       },
       xAxis: { type: 'category', data: dates, axisLabel: { formatter: (d: string) => date(d) } },
       yAxis: { type: 'value', axisLabel: { formatter: (v: number) => compact(v) } },
-      series: REGIONS.map((region) => ({
+      series: REGIONS.filter((region) => !hiddenRegions.has(region)).map((region) => ({
         name: region,
         type: 'line',
         showSymbol: false,
@@ -78,7 +89,7 @@ export function SdkGeoTrendPanel() {
       })),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dates, byRegion],
+    [dates, byRegion, hiddenRegions],
   )
 
   // ref must stay attached to a permanently-mounted div — useEcharts' mount
@@ -89,7 +100,7 @@ export function SdkGeoTrendPanel() {
   // stays permanently blank even after data arrives — same trap the hook's
   // own doc comment warns about. Use ECharts' native showLoading() (via the
   // last arg here) instead, same as ProviderShare/RacingBar.
-  const ref = useEcharts(option, [dates, byRegion], loading && points.length === 0)
+  const ref = useEcharts(option, [dates, byRegion, hiddenRegions], loading && points.length === 0)
 
   return (
     <div className="min-w-[380px] flex-1 rounded-lg border border-[var(--pulse-border)] bg-[var(--pulse-panel)] p-4">
@@ -126,14 +137,31 @@ export function SdkGeoTrendPanel() {
         // Direct-labeled legend, not ECharts' own — matches this app's
         // other panels, and doubles as the required secondary encoding for
         // a categorical palette whose worst adjacent CVD pair sits in the
-        // 8-12 floor band (see tokens.ts REGION_COL).
+        // 8-12 floor band (see tokens.ts REGION_COL). Also click-to-toggle:
+        // filtering happens in React state (`hiddenRegions`) rather than via
+        // ECharts' own legend component, so the accessible label styling
+        // stays exactly this custom markup.
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-          {REGIONS.map((region) => (
-            <span key={region} className="flex items-center gap-1.5 font-mono text-[10.5px] text-[var(--pulse-muted)]">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: REGION_COL[region] }} aria-hidden />
-              {region}
-            </span>
-          ))}
+          {REGIONS.map((region) => {
+            const hidden = hiddenRegions.has(region)
+            return (
+              <button
+                key={region}
+                type="button"
+                aria-pressed={!hidden}
+                onClick={() => toggleRegion(region)}
+                className="flex items-center gap-1.5 font-mono text-[10.5px] text-[var(--pulse-muted)] transition-opacity hover:opacity-80"
+                style={{ opacity: hidden ? 0.4 : 1 }}
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: REGION_COL[region] }}
+                  aria-hidden
+                />
+                <span className={hidden ? 'line-through' : undefined}>{region}</span>
+              </button>
+            )
+          })}
         </div>
       )}
 
