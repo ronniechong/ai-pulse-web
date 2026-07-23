@@ -56,6 +56,18 @@ export function useFormatters() {
     return intl.formatNumber(value, { minimumFractionDigits: digits, maximumFractionDigits: digits })
   }
 
+  /** USD, e.g. "$0.07" — month-to-date spend is small enough that 2dp
+   * (rather than a compact/rounded form) is the more honest display. */
+  function currency(value: number, digits = 2): string {
+    return intl.formatNumber(value, { style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits })
+  }
+
+  /** Milliseconds -> seconds, e.g. "4.3s" — LLM call latency is always in
+   * the single-digit-seconds range, never worth showing in raw ms. */
+  function seconds(ms: number, digits = 1): string {
+    return `${intl.formatNumber(ms / 1000, { minimumFractionDigits: digits, maximumFractionDigits: digits })}s`
+  }
+
   function decimalDelta(value: number | null | undefined, digits = 2): string {
     if (value === null || value === undefined || value === 0) return '—'
     return intl.formatNumber(value, { signDisplay: 'exceptZero', minimumFractionDigits: digits, maximumFractionDigits: digits })
@@ -87,5 +99,19 @@ export function useFormatters() {
     return intl.formatRelativeTime(-Math.round(diffHours / 24), 'day', { numeric: 'auto' })
   }
 
-  return { pct, deltaPct, relativePct, deltaRank, compact, wholeNumber, decimal, decimalDelta, date, dateTime, relativeTime }
+  return {
+    pct,
+    deltaPct,
+    relativePct,
+    deltaRank,
+    compact,
+    wholeNumber,
+    decimal,
+    decimalDelta,
+    currency,
+    seconds,
+    date,
+    dateTime,
+    relativeTime,
+  }
 }

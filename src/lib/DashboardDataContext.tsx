@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { DATA_BASE, MANIFEST_URL, POLL_INTERVAL_MS, fetchJson } from './api'
 import type {
+  AiTransparencyData,
   AppsData,
   CommentaryData,
   FactsData,
@@ -42,6 +43,8 @@ interface DashboardData {
   factsLoading: boolean
   commentary: CommentaryData | null
   commentaryLoading: boolean
+  aiTransparency: AiTransparencyData | null
+  aiTransparencyLoading: boolean
   error: string | null
 }
 
@@ -87,6 +90,8 @@ const INITIAL_STATE: DashboardData = {
   factsLoading: true,
   commentary: null,
   commentaryLoading: true,
+  aiTransparency: null,
+  aiTransparencyLoading: true,
   error: null,
 }
 
@@ -131,6 +136,7 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
             occupationsLoading: true,
             factsLoading: true,
             commentaryLoading: true,
+            aiTransparencyLoading: true,
           }),
         }))
 
@@ -163,6 +169,9 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
         loadSource<FactsData>(`${DATA_BASE}/facts.json`, (facts) => setState((s) => ({ ...s, facts, factsLoading: false })))
         loadSource<CommentaryData>(`${DATA_BASE}/commentary.json`, (commentary) =>
           setState((s) => ({ ...s, commentary, commentaryLoading: false })),
+        )
+        loadSource<AiTransparencyData>(`${DATA_BASE}/ai-transparency.json`, (aiTransparency) =>
+          setState((s) => ({ ...s, aiTransparency, aiTransparencyLoading: false })),
         )
       } catch (e) {
         if (cancelled) return

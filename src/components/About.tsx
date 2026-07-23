@@ -1,4 +1,5 @@
 import { SectionLabel } from '@/components/SectionLabel'
+import { AiTransparencyPanel } from '@/components/AiTransparencyPanel'
 
 const CAVEATS = [
   'Token counts come from each provider’s own tokenizer — not directly comparable across rows.',
@@ -10,6 +11,7 @@ const CAVEATS = [
   'The provider-concentration index (HHI) excludes the "other" aggregate bucket, same as the provider-share treemap it sits above.',
   'App category tags (Coding / CLI agent) only cover a subset of apps on a given day — untagged apps only surface under the "All" tab.',
   '"New entrant" (Today\'s Pulse, rankings history) means newly in the top 50, not newly released — OpenRouter\'s API has no visibility below rank 50, so a returning model looks identical to a genuinely new one.',
+  'The AI-engineering transparency panel\'s "success rate" is per LLM call attempt, not per day — a day with a retried attempt after a rejected response contributes more than one attempt to the denominator.',
 ]
 
 export function About() {
@@ -84,6 +86,8 @@ export function About() {
             ))}
           </ul>
         </div>
+
+        <AiTransparencyPanel />
       </div>
     </section>
   )

@@ -213,6 +213,44 @@ export interface RankingsDailyTotalsData {
   rows: RankingsDailyTotalRow[]
 }
 
+export interface LlmReliability {
+  attempts_checked: number
+  success_count: number
+  fallback_count: number
+  success_rate: number | null
+  avg_latency_ms: number | null
+}
+
+export interface ToneDistribution {
+  quiet: number
+  notable: number
+  big_day: number
+  days_checked: number
+}
+
+export interface AiTransparencySpend {
+  month_to_date_usd: number
+  lifetime_usd: number
+  lifetime_calls: number
+  cost_per_generation_usd: number | null
+}
+
+export interface EvalSuiteHealth {
+  total: number
+  passed: number
+  failed: number
+}
+
+export interface AiTransparencyData {
+  generated_at: string
+  window_days: number
+  source: string
+  llm_reliability: LlmReliability
+  tone_distribution: ToneDistribution
+  spend: AiTransparencySpend
+  eval_suite: EvalSuiteHealth
+}
+
 export type SourceStatus = 'ok' | 'degraded' | 'skipped'
 
 export interface ManifestSource {

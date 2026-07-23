@@ -263,3 +263,44 @@ deterministic template — so commentary is either LLM-written-and-verified or
 template-only, never unverified. The `tone` badge (quiet / notable / big
 day) is always rule-based on fact counts/magnitude, never the LLM's own
 judgment.
+
+## AI-engineering transparency (About page)
+
+**Definition:** How the commentary pipeline actually behaved over a
+trailing 30-day window — how often the LLM call produced usable output
+vs. fell back to the deterministic template, how long a call takes, tone
+distribution, spend (month-to-date and lifetime), and whether the repo's
+own eval suite currently passes.
+
+**Source:** `ai-transparency.json` (`AiTransparencyData`: `llm_reliability`
+= `{attempts_checked, success_count, fallback_count, success_rate,
+avg_latency_ms}`, `tone_distribution` = `{quiet, notable, big_day,
+days_checked}`, `spend` = `{month_to_date_usd, lifetime_usd,
+lifetime_calls, cost_per_generation_usd}`, `eval_suite` = `{total, passed,
+failed}`). `llm_reliability` is computed from real Langfuse
+`ai-pulse-commentary` traces (`ai-pulse-data`'s `ai_transparency.py`);
+`tone_distribution` is tallied from local `commentary.json` history, not
+Langfuse; `spend` extends `spend-ledger.json`'s existing per-month figures
+with a lifetime sum and a derived cost-per-generation; `eval_suite` is a
+live re-run of the repo's own `evals/fixtures` suite (`eval_runner.py`),
+not a stored CI badge — it reflects whether *this exact running code*
+still passes its own fixtures, not the state of the last GitHub Actions run.
+
+**Grain:** One rolling snapshot, recomputed every pipeline run. `llm_reliability`
+and `tone_distribution` cover the trailing `window_days` (30); `spend.lifetime_*`
+and `eval_suite` are as-of-right-now figures, not windowed.
+
+**Caveats:**
+- `success_rate` is per **call attempt**, not per day — with
+  `COMMENTARY_MAX_RETRIES = 1`, a single day can contribute up to two traces
+  (an initial rejected attempt plus a retry), so this is "share of attempts
+  that produced usable output," not "share of days the LLM was actually
+  used." A day where the first attempt fails but the retry succeeds counts
+  one fallback attempt and one success attempt, not one success day.
+- `cost_per_generation_usd` divides lifetime spend by `lifetime_calls`,
+  which (like the ledger it's built from) only counts **successful**
+  generations — a day that fell back to the template contributed $0 and
+  no call, so it doesn't dilute the average.
+- `eval_suite` runs the same deterministic, mocked fixture suite CI runs
+  (no LLM call) — a failure here would mean a real regression reached
+  `main` despite CI, not a flaky/networked check.
